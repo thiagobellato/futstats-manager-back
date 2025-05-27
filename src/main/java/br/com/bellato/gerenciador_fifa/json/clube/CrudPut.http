@@ -1,0 +1,6 @@
+PUT http://localhost:8080/api/atleta/atualizar/1
+Content-Type: application/json
+
+{
+  "posicao": "LATERAL_DIREITO"
+}

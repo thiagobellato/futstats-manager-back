@@ -1,0 +1,13 @@
+POST http://localhost:8080/api/clube/adicionar
+Content-Type: application/json
+
+{
+  "nome": "Real Madrid",
+  "sigla": "R",
+  "pais": "Espanha"
+}
+
+
+
+
+

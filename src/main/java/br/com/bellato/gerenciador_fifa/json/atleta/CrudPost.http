@@ -1,0 +1,12 @@
+POST http://localhost:8080/api/atleta/adicionar
+Content-Type: application/json
+
+{
+  "nome": "Thiago",
+  "sobrenome": "Bellato",
+  "dataDeNascimento": "1995-07-14",
+  "nacionalidade": "brasileiro",
+  "posicao": "VOL",
+  "gol": 0,
+  "assistencia": 0
+}
