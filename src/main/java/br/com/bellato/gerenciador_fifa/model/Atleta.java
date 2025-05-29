@@ -10,6 +10,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -42,6 +44,10 @@ public class Atleta {
 
     @Column(name = "atletaAssistencia")
     private int assistencia = 0;
+
+    @ManyToOne
+    @JoinColumn(name = "clube_id")
+    private Clube clube;
 
     public Atleta() {
     }

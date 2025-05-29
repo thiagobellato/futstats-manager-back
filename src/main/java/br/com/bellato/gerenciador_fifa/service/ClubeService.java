@@ -65,7 +65,7 @@ public class ClubeService {
             ClubeExistente.setPais(dadosAtualizados.getPais());
         }
 
-        if (dadosAtualizados.getSigla() != 0) {
+        if (dadosAtualizados.getSigla() != null) {
             ClubeExistente.setSigla(dadosAtualizados.getSigla());
         }
         // Salva o Clube atualizado no banco de dados
