@@ -3,7 +3,7 @@ Content-Type: application/json
 
 {
   "nome": "Real Madrid",
-  "sigla": "R",
+  "sigla": "REA",
   "pais": "Espanha"
 }
 

@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol;
 import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol.PosicaoFutebolConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
+import jakarta.persistence.Convert;/*  */
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -53,7 +53,7 @@ public class Atleta {
     }
 
     public Atleta(Long atletaId, String nome, String sobrenome, LocalDate dataDeNascimento, String nacionalidade,
-            PosicaoFutebol posicao, int gol, int assistencia) {
+            PosicaoFutebol posicao, int gol, int assistencia, Clube clube) {
         this.atletaId = atletaId;
         this.nome = nome;
         this.sobrenome = sobrenome;
@@ -62,6 +62,7 @@ public class Atleta {
         this.posicao = posicao;
         this.gol = gol;
         this.assistencia = assistencia;
+        this.clube = clube;
     }
 
     public Long getAtletaId() {
@@ -128,10 +129,20 @@ public class Atleta {
         this.assistencia = assistencia;
     }
 
+    public Clube getClube() {
+        return clube;
+    }
+
+    public void setClube(Clube clube) {
+        this.clube = clube;
+    }
+
     @Override
     public String toString() {
         return "Atleta [atletaId=" + atletaId + ", nome=" + nome + ", sobrenome=" + sobrenome + ", dataDeNascimento="
                 + dataDeNascimento + ", nacionalidade=" + nacionalidade + ", posicao=" + posicao + ", gol=" + gol
-                + ", assistencia=" + assistencia + "]";
+                + ", assistencia=" + assistencia + ", clube=" + clube + "]";
     }
+
+   
 }
