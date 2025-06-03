@@ -43,6 +43,11 @@ public class AtletaService {
         return atleta = atletaRepository.save(atleta);
     }
 
+    public List<Atleta> adicionarEmLote(List<Atleta> atletas) {
+    return atletaRepository.saveAll(atletas);
+}
+
+
     public boolean apagarPorId(Long id) {
         Optional<Atleta> atletaOptional = atletaRepository.findById(id);
         if (atletaOptional.isPresent()) {

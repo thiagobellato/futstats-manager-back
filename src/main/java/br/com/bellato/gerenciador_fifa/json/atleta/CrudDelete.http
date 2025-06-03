@@ -1,2 +1,2 @@
-DELETE  http://localhost:8080/api/atleta/deletar/4
+DELETE  http://localhost:8080/api/atleta/deletar/3
 Content-Type: application/json

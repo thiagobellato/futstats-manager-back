@@ -72,6 +72,19 @@ public class AtletaController {
         return ResponseEntity.status(201).body(atleta);
     }
 
+    @PostMapping("/adicionarr")
+    @Operation(summary = "Método para adicionar uma lista de Atletas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Atletas adicionados com sucesso!"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou incompletos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao adicionar os Atletas"),
+            @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
+    })
+    public ResponseEntity<List<Atleta>> adicionarEmLote(@RequestBody List<Atleta> atletas) {
+        List<Atleta> atletasSalvos = atletaService.adicionarEmLote(atletas);
+        return ResponseEntity.status(201).body(atletasSalvos);
+    }
+
     @DeleteMapping("deletar/{id}")
     @Operation(summary = "Método para deletar Atletas ")
     @ApiResponses(value = {

@@ -2,9 +2,9 @@ POST http://localhost:8080/api/clube/adicionar
 Content-Type: application/json
 
 {
-  "nome": "Real Madrid",
-  "sigla": "REA",
-  "pais": "Espanha"
+  "nome": "Arsenal",
+  "sigla": "ARS",
+  "pais": "Inglaterra"
 }
 
 
