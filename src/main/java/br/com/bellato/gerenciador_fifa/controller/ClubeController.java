@@ -72,6 +72,19 @@ public class ClubeController {
         return ResponseEntity.status(201).body(Clube);
     }
 
+    @PostMapping("/adicionar-em-lote")
+    @Operation(summary = "Método para adicionar uma lista de Clubes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Clubes adicionados com sucesso!"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou incompletos"),
+            @ApiResponse(responseCode = "500", description = "Erro ao adicionar os Clubes"),
+            @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
+    })
+    public ResponseEntity<List<Clube>> adicionarEmLote(@RequestBody List<Clube> clubes) {
+        List<Clube> clubesSalvos = ClubeService.adicionarEmLote(clubes);
+        return ResponseEntity.status(201).body(clubesSalvos);
+    }
+
     @DeleteMapping("deletar/{id}")
     @Operation(summary = "Método para deletar Clubes ")
     @ApiResponses(value = {

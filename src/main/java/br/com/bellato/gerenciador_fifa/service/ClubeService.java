@@ -43,6 +43,10 @@ public class ClubeService {
         return Clube = ClubeRepository.save(Clube);
     }
 
+     public List<Clube> adicionarEmLote(List<Clube> clubes) {
+    return ClubeRepository.saveAll(clubes);
+}
+
     public boolean apagarPorId(Long id) {
         Optional<Clube> ClubeOptional = ClubeRepository.findById(id);
         if (ClubeOptional.isPresent()) {

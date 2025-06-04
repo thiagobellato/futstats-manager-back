@@ -1,0 +1,30 @@
+POST http://localhost:8080/api/clube/adicionar-em-lote
+Content-Type: application/json
+
+[
+  { "nome": "Real Madrid", "sigla": "RMA", "pais": "Espanha" },
+  { "nome": "Barcelona", "sigla": "BAR", "pais": "Espanha" },
+  { "nome": "Atlético de Madrid", "sigla": "ATM", "pais": "Espanha" },
+  { "nome": "Arsenal", "sigla": "ARS", "pais": "Inglaterra" },
+  { "nome": "Liverpool", "sigla": "LIV", "pais": "Inglaterra" },
+  { "nome": "Manchester United", "sigla": "MUN", "pais": "Inglaterra" },
+  { "nome": "Manchester City", "sigla": "MCI", "pais": "Inglaterra" },
+  { "nome": "Chelsea", "sigla": "CHE", "pais": "Inglaterra" },
+  { "nome": "Tottenham", "sigla": "TOT", "pais": "Inglaterra" },
+  { "nome": "Paris Saint-Germain", "sigla": "PSG", "pais": "França" },
+  { "nome": "Juventus", "sigla": "JUV", "pais": "Itália" },
+  { "nome": "Inter de Milão", "sigla": "INT", "pais": "Itália" },
+  { "nome": "Milan", "sigla": "MIL", "pais": "Itália" },
+  { "nome": "Napoli", "sigla": "NAP", "pais": "Itália" },
+  { "nome": "Borussia Dortmund", "sigla": "BVB", "pais": "Alemanha" },
+  { "nome": "Bayern de Munique", "sigla": "FCB", "pais": "Alemanha" },
+  { "nome": "Vasco da Gama", "sigla": "VAS", "pais": "Brasil" },
+  { "nome": "Palmeiras", "sigla": "PAL", "pais": "Brasil" },
+  { "nome": "Flamengo", "sigla": "FLA", "pais": "Brasil" },
+  { "nome": "Grêmio", "sigla": "GRE", "pais": "Brasil" }
+]
+
+
+
+
+
