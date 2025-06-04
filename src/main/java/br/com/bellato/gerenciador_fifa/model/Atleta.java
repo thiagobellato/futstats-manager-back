@@ -39,12 +39,6 @@ public class Atleta {
     @Convert(converter = PosicaoFutebolConverter.class)
     private PosicaoFutebol posicao;
 
-    @Column(name = "atletaGol")
-    private int gol = 0;
-
-    @Column(name = "atletaAssistencia")
-    private int assistencia = 0;
-
     @ManyToOne
     @JoinColumn(name = "clube_id")
     private Clube clube;
@@ -53,15 +47,13 @@ public class Atleta {
     }
 
     public Atleta(Long atletaId, String nome, String sobrenome, LocalDate dataDeNascimento, String nacionalidade,
-            PosicaoFutebol posicao, int gol, int assistencia, Clube clube) {
+            PosicaoFutebol posicao, Clube clube) {
         this.atletaId = atletaId;
         this.nome = nome;
         this.sobrenome = sobrenome;
         this.dataDeNascimento = dataDeNascimento;
         this.nacionalidade = nacionalidade;
         this.posicao = posicao;
-        this.gol = gol;
-        this.assistencia = assistencia;
         this.clube = clube;
     }
 
@@ -113,22 +105,6 @@ public class Atleta {
         this.posicao = posicao;
     }
 
-    public int getGol() {
-        return gol;
-    }
-
-    public void setGol(int gol) {
-        this.gol = gol;
-    }
-
-    public int getAssistencia() {
-        return assistencia;
-    }
-
-    public void setAssistencia(int assistencia) {
-        this.assistencia = assistencia;
-    }
-
     public Clube getClube() {
         return clube;
     }
@@ -140,9 +116,8 @@ public class Atleta {
     @Override
     public String toString() {
         return "Atleta [atletaId=" + atletaId + ", nome=" + nome + ", sobrenome=" + sobrenome + ", dataDeNascimento="
-                + dataDeNascimento + ", nacionalidade=" + nacionalidade + ", posicao=" + posicao + ", gol=" + gol
-                + ", assistencia=" + assistencia + ", clube=" + clube + "]";
+                + dataDeNascimento + ", nacionalidade=" + nacionalidade + ", posicao=" + posicao + ", clube=" + clube
+                + "]";
     }
 
-   
 }

@@ -44,9 +44,8 @@ public class AtletaService {
     }
 
     public List<Atleta> adicionarEmLote(List<Atleta> atletas) {
-    return atletaRepository.saveAll(atletas);
-}
-
+        return atletaRepository.saveAll(atletas);
+    }
 
     public boolean apagarPorId(Long id) {
         Optional<Atleta> atletaOptional = atletaRepository.findById(id);
@@ -61,7 +60,7 @@ public class AtletaService {
     public Atleta atualizarPorId(Long id, Atleta dadosAtualizados) {
         Atleta atletaExistente = atletaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Atleta não encontrado com o ID: " + id));
-    
+
         // Atualiza apenas os campos não nulos de dadosAtualizados
         if (dadosAtualizados.getNome() != null) {
             atletaExistente.setNome(dadosAtualizados.getNome());
@@ -78,16 +77,11 @@ public class AtletaService {
         if (dadosAtualizados.getPosicao() != null) {
             atletaExistente.setPosicao(dadosAtualizados.getPosicao());
         }
-        // Exemplo de campos primitivos que podem ser atualizados apenas se diferentes do valor padrão
-        if (dadosAtualizados.getGol() != 0) {
-            atletaExistente.setGol(dadosAtualizados.getGol());
-        }
-        if (dadosAtualizados.getAssistencia() != 0) {
-            atletaExistente.setAssistencia(dadosAtualizados.getAssistencia());
-        }
-    
+        // Exemplo de campos primitivos que podem ser atualizados apenas se diferentes
+        // do valor padrão
+
         // Salva o atleta atualizado no banco de dados
         return atletaRepository.save(atletaExistente);
     }
-    
+
 }
