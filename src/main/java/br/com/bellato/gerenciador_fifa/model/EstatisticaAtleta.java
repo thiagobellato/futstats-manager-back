@@ -19,19 +19,19 @@ public class EstatisticaAtleta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "atleta_id", nullable = false)
-    private Atleta atleta;
+    // @ManyToOne
+    // @JoinColumn(name = "atleta_id", nullable = false)
+    // private Atleta atleta;
 
     @ManyToOne
     @JoinColumn(name = "clube_id", nullable = false)
     private Clube clube;
 
     @Column(name = "atletaGols")
-    private int gols;
+    private Integer gols;
 
     @Column(name = "atletaAssistencias")
-    private int assistencias;
+    private Integer assistencias;
 
     @Column(name = "atletaDataInicio")
     private LocalDate dataInicio;
@@ -42,10 +42,10 @@ public class EstatisticaAtleta {
     public EstatisticaAtleta() {
     }
 
-    public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, int gols, int assistencias, LocalDate dataInicio,
-            LocalDate dataFim) {
+    public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer assistencias,
+            LocalDate dataInicio, LocalDate dataFim) {
         this.id = id;
-        this.atleta = atleta;
+        //this.atleta = atleta;
         this.clube = clube;
         this.gols = gols;
         this.assistencias = assistencias;
@@ -61,13 +61,13 @@ public class EstatisticaAtleta {
         this.id = id;
     }
 
-    public Atleta getAtleta() {
-        return atleta;
-    }
+    // public Atleta getAtleta() {
+    //     return atleta;
+    // }
 
-    public void setAtleta(Atleta atleta) {
-        this.atleta = atleta;
-    }
+    // public void setAtleta(Atleta atleta) {
+    //     this.atleta = atleta;
+    // }
 
     public Clube getClube() {
         return clube;
@@ -77,19 +77,19 @@ public class EstatisticaAtleta {
         this.clube = clube;
     }
 
-    public int getGols() {
+    public Integer getGols() {
         return gols;
     }
 
-    public void setGols(int gols) {
+    public void setGols(Integer gols) {
         this.gols = gols;
     }
 
-    public int getAssistencias() {
+    public Integer getAssistencias() {
         return assistencias;
     }
 
-    public void setAssistencias(int assistencias) {
+    public void setAssistencias(Integer assistencias) {
         this.assistencias = assistencias;
     }
 
@@ -111,7 +111,7 @@ public class EstatisticaAtleta {
 
     @Override
     public String toString() {
-        return "EstatisticaAtleta [id=" + id + ", atleta=" + atleta + ", clube=" + clube + ", gols=" + gols
+        return "EstatisticaAtleta [id=" + id + /* ", atleta=" + atleta +*/ ", clube=" + clube + ", gols=" + gols
                 + ", assistencias=" + assistencias + ", dataInicio=" + dataInicio + ", dataFim=" + dataFim + "]";
     }
 

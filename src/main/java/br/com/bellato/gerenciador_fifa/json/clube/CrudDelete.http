@@ -1,2 +1,2 @@
-DELETE  http://localhost:8080/api/clube/deletar/
+DELETE  http://localhost:8080/api/clube/deletar/21
 Content-Type: application/json

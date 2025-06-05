@@ -1,2 +1,2 @@
-GET http://localhost:8080/api/clube/11
+GET http://localhost:8080/api/clube/21
 Content-Type: application/json

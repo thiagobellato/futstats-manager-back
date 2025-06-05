@@ -1,6 +1,6 @@
-PUT http://localhost:8080/api/atleta/atualizar/1
+PUT http://localhost:8080/api/clube/atualizar/21
 Content-Type: application/json
 
 {
-  "posicao": "LATERAL_DIREITO"
+  "pais":""
 }
