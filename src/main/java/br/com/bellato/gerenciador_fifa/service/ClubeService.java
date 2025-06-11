@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.clube.ClubeMapper;
 import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,16 +39,17 @@ public class ClubeService {
         return optTipo.get();
     }
 
-    public Clube adicionar(Clube Clube) {
+    public ClubeResponseDTO adicionar(ClubeRequestDTO dto) {
 
-        // Clube.setClubeId((long) 0);
+        Clube clube = ClubeMapper.toEntity(dto);
+        Clube salvo = ClubeRepository.save(clube);
 
-        return Clube = ClubeRepository.save(Clube);
+        return ClubeMapper.toDTO(salvo);
     }
 
-     public List<Clube> adicionarEmLote(List<Clube> clubes) {
-    return ClubeRepository.saveAll(clubes);
-}
+    public List<Clube> adicionarEmLote(List<Clube> clubes) {
+        return ClubeRepository.saveAll(clubes);
+    }
 
     public boolean apagarPorId(Long id) {
         Optional<Clube> ClubeOptional = ClubeRepository.findById(id);

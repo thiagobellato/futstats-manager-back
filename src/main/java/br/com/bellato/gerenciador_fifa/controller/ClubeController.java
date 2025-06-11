@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
 import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.service.ClubeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,12 +66,10 @@ public class ClubeController {
             @ApiResponse(responseCode = "500", description = "Erro ao adicionar o Clube"),
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
-    public ResponseEntity<Clube> adicionar(@RequestBody Clube Clube) {
-        ClubeService.adicionar(Clube);
+    public ResponseEntity<ClubeResponseDTO> adicionar(@RequestBody ClubeRequestDTO dto) {
+        ClubeResponseDTO response = ClubeService.adicionar(dto);
 
-        // Clube ClubeAdicionado = ClubeService.adicionar(Clube);
-
-        return ResponseEntity.status(201).body(Clube);
+        return ResponseEntity.status(201).body(response);
     }
 
     @PostMapping("/adicionar-em-lote")
