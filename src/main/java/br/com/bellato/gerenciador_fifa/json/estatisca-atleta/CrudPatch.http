@@ -1,0 +1,7 @@
+PATCH http://localhost:8080/api/estatistica/atualizar/1 
+Content-Type: application/json
+
+{
+    "gols": 38,
+    "assistencias": 121
+}

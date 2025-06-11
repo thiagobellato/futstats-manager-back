@@ -2,5 +2,5 @@ PUT http://localhost:8080/api/clube/atualizar/21
 Content-Type: application/json
 
 {
-  "pais":""
+  "sigla":"ARB"
 }

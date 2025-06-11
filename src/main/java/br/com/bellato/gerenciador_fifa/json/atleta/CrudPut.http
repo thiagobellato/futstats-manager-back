@@ -1,7 +1,7 @@
 
-PUT http://localhost:8080/api/atleta/atualizar/1
+PUT http://localhost:8080/api/atleta/atualizar/501
 Content-Type: application/json
 
 {
-  "clube_id": 1
+  "nacionalidade": "Brasileiro"
 }

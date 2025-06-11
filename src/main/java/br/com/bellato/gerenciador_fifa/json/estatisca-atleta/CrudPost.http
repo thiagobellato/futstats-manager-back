@@ -1,0 +1,15 @@
+POST http://localhost:8080/api/estatistica/adicionar
+Content-Type: application/json
+
+{
+  "atleta": {
+    "atletaId": 501
+  },
+  "clube": {
+    "clubeId": 2
+  },
+  "gols": 0,
+  "assistencias": 0 ,
+  "dataInicio": "2025-01-01",
+  "dataFim": null
+}

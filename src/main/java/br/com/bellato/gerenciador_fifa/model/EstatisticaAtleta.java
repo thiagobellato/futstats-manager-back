@@ -19,9 +19,9 @@ public class EstatisticaAtleta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // @ManyToOne
-    // @JoinColumn(name = "atleta_id", nullable = false)
-    // private Atleta atleta;
+    @ManyToOne
+    @JoinColumn(name = "atleta_id", nullable = false)
+    private Atleta atleta;
 
     @ManyToOne
     @JoinColumn(name = "clube_id", nullable = false)
@@ -45,7 +45,7 @@ public class EstatisticaAtleta {
     public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer assistencias,
             LocalDate dataInicio, LocalDate dataFim) {
         this.id = id;
-        //this.atleta = atleta;
+        // this.atleta = atleta;
         this.clube = clube;
         this.gols = gols;
         this.assistencias = assistencias;
@@ -61,13 +61,13 @@ public class EstatisticaAtleta {
         this.id = id;
     }
 
-    // public Atleta getAtleta() {
-    //     return atleta;
-    // }
+    public Atleta getAtleta() {
+        return atleta;
+    }
 
-    // public void setAtleta(Atleta atleta) {
-    //     this.atleta = atleta;
-    // }
+    public void setAtleta(Atleta atleta) {
+        this.atleta = atleta;
+    }
 
     public Clube getClube() {
         return clube;
@@ -111,7 +111,7 @@ public class EstatisticaAtleta {
 
     @Override
     public String toString() {
-        return "EstatisticaAtleta [id=" + id + /* ", atleta=" + atleta +*/ ", clube=" + clube + ", gols=" + gols
+        return "EstatisticaAtleta [id=" + id + ", atleta=" + atleta + ", clube=" + clube + ", gols=" + gols
                 + ", assistencias=" + assistencias + ", dataInicio=" + dataInicio + ", dataFim=" + dataFim + "]";
     }
 

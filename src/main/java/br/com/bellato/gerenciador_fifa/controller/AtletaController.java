@@ -56,7 +56,7 @@ public class AtletaController {
         return ResponseEntity.ok(atletaService.obterPorId(id));
     }
 
-    
+    @PostMapping("/adicionar")
     @Operation(summary = "Método para adicionar Atletas ")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Atleta adicionado com sucesso!"),
@@ -83,7 +83,7 @@ public class AtletaController {
     public ResponseEntity<List<Atleta>> adicionarEmLote(@RequestBody List<Atleta> atletas) {
         List<Atleta> atletasSalvos = atletaService.adicionarEmLote(atletas);
         return ResponseEntity.status(201).body(atletasSalvos);
-    }@PostMapping("/adicionar")
+    }
 
     @DeleteMapping("deletar/{id}")
     @Operation(summary = "Método para deletar Atletas ")
