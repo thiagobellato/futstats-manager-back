@@ -68,7 +68,6 @@ public class ClubeController {
     })
     public ResponseEntity<ClubeResponseDTO> adicionar(@RequestBody ClubeRequestDTO dto) {
         ClubeResponseDTO response = ClubeService.adicionar(dto);
-
         return ResponseEntity.status(201).body(response);
     }
 

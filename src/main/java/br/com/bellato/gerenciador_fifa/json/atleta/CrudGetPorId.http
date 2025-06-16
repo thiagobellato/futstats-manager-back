@@ -1,2 +1,2 @@
-GET http://localhost:8080/api/atleta/115
+GET http://localhost:8080/api/atleta/506
 Content-Type: application/json

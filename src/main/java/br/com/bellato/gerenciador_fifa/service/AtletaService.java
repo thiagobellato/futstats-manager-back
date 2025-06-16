@@ -1,46 +1,47 @@
 package br.com.bellato.gerenciador_fifa.service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.atleta.AtletaMapper;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
+import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
+import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class AtletaService {
+
     @Autowired
     private AtletaRepository atletaRepository;
 
+    @Autowired
+    private ClubeRepository clubeRepository; // ✅ Corrigido aqui
+
     public List<Atleta> obterTodos() {
-
-        List<Atleta> tipos = atletaRepository.findAll();
-
-        return tipos
-                .stream()
-                .collect(Collectors.toList());
+        return atletaRepository.findAll(); // ✅ mais direto
     }
 
     public Atleta obterPorId(long id) {
-
-        Optional<Atleta> optTipo = atletaRepository.findById(id);
-
-        if (optTipo.isEmpty()) {
-            throw new RuntimeException("Nenhum registro encontrado para o ID: " + id);
-        }
-
-        return optTipo.get();
+        return atletaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nenhum registro encontrado para o ID: " + id));
     }
 
-    public Atleta adicionar(Atleta atleta) {
+    public AtletaResponseDTO adicionar(AtletaRequestDTO dto) {
+        // ✅ Busca o clube pelo ID
+        Clube clube = clubeRepository.findById(dto.getClubeId())
+                .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + dto.getClubeId()));
 
-        // atleta.setAtletaId((long) 0);
+        // ✅ Usa o mapper passando o clube já instanciado
+        Atleta atleta = AtletaMapper.toEntity(dto, clube);
 
-        return atleta = atletaRepository.save(atleta);
+        Atleta salvo = atletaRepository.save(atleta);
+        return AtletaMapper.toDTO(salvo);
     }
 
     public List<Atleta> adicionarEmLote(List<Atleta> atletas) {
@@ -48,20 +49,17 @@ public class AtletaService {
     }
 
     public boolean apagarPorId(Long id) {
-        Optional<Atleta> atletaOptional = atletaRepository.findById(id);
-        if (atletaOptional.isPresent()) {
+        if (atletaRepository.existsById(id)) {
             atletaRepository.deleteById(id);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     public Atleta atualizarPorId(Long id, Atleta dadosAtualizados) {
         Atleta atletaExistente = atletaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Atleta não encontrado com o ID: " + id));
 
-        // Atualiza apenas os campos não nulos de dadosAtualizados
         if (dadosAtualizados.getNome() != null) {
             atletaExistente.setNome(dadosAtualizados.getNome());
         }
@@ -77,11 +75,7 @@ public class AtletaService {
         if (dadosAtualizados.getPosicao() != null) {
             atletaExistente.setPosicao(dadosAtualizados.getPosicao());
         }
-        // Exemplo de campos primitivos que podem ser atualizados apenas se diferentes
-        // do valor padrão
 
-        // Salva o atleta atualizado no banco de dados
         return atletaRepository.save(atletaExistente);
     }
-
 }
