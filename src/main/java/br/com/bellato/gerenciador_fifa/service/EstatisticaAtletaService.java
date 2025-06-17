@@ -6,8 +6,14 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.estatistica_atleta.EstatisticaAtletaMapper;
+import br.com.bellato.gerenciador_fifa.model.Atleta;
+import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
 import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
+import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -16,7 +22,12 @@ public class EstatisticaAtletaService {
 
     @Autowired
     private EstatisticaAtletaRepository estatisticaRepository;
+
+    @Autowired
     private AtletaRepository atletaRepository;
+
+    @Autowired
+    private ClubeRepository clubeRepository;
 
     public List<EstatisticaAtleta> obterTodas() {
         return estatisticaRepository.findAll();
@@ -27,8 +38,17 @@ public class EstatisticaAtletaService {
                 .orElseThrow(() -> new EntityNotFoundException("Estatística não encontrada com o ID: " + atletaId));
     }
 
-    public EstatisticaAtleta adicionar(EstatisticaAtleta estatistica) {
-        return estatisticaRepository.save(estatistica);
+    public EstatisticaAtletaResponseDTO adicionar(EstatisticaAtletaRequestDTO estatistica) {
+
+        Atleta a = atletaRepository.findById(estatistica.getAtleta_id())
+                .orElseThrow(() -> new RuntimeException("Atleta não encontrado com ID: " + estatistica.getAtleta_id()));
+
+        Clube c = clubeRepository.findById(estatistica.getClube_id())
+                .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + estatistica.getClube_id()));
+
+        EstatisticaAtleta estatisticaAtleta = EstatisticaAtletaMapper.toEntity(estatistica, c, a);
+        EstatisticaAtleta salvo = estatisticaRepository.save(estatisticaAtleta);
+        return EstatisticaAtletaMapper.toDTO(salvo);
     }
 
     /**
@@ -42,7 +62,7 @@ public class EstatisticaAtletaService {
 
         // Atualização condicional com verificação de nulos
         // if (atualizada.getAtleta() != null) {
-        //     existente.setAtleta(atualizada.getAtleta());
+        // existente.setAtleta(atualizada.getAtleta());
         // }
         if (atualizada.getClube() != null) {
             existente.setClube(atualizada.getClube());

@@ -39,7 +39,6 @@ public class AtletaService {
 
         // ✅ Usa o mapper passando o clube já instanciado
         Atleta atleta = AtletaMapper.toEntity(dto, clube);
-
         Atleta salvo = atletaRepository.save(atleta);
         return AtletaMapper.toDTO(salvo);
     }
