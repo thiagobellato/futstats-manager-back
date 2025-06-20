@@ -34,8 +34,15 @@ public class AtletaService {
 
     public AtletaResponseDTO adicionar(AtletaRequestDTO dto) {
         // ✅ Busca o clube pelo ID
-        Clube clube = clubeRepository.findById(dto.getClubeId())
-                .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + dto.getClubeId()));
+        // Clube clube = clubeRepository.findById(dto.getClubeId())
+        // .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " +
+        // dto.getClubeId()));
+
+        Clube clube = null;
+        if (dto.getClubeId() != null) {
+            clube = clubeRepository.findById(dto.getClubeId())
+                    .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + dto.getClubeId()));
+        }
 
         // ✅ Usa o mapper passando o clube já instanciado
         Atleta atleta = AtletaMapper.toEntity(dto, clube);

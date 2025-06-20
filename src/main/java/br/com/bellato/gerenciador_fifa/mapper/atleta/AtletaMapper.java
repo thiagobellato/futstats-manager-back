@@ -23,7 +23,14 @@ public class AtletaMapper {
         dto.setAtletaId(atleta.getAtletaId());
         dto.setNome(atleta.getNome());
         dto.setPosicao(atleta.getPosicao());
-        dto.setClubeNome(atleta.getClube().getNome());
+
+        // dto.setClubeNome(atleta.getClube().getNome());
+
+        if (atleta.getClube() != null) {
+            dto.setClubeNome(atleta.getClube().getNome());
+        } else {
+            dto.setClubeNome("Sem Clube"); // Ou uma string padrão, tipo "Sem clube"
+        }
         return dto;
     }
 }
