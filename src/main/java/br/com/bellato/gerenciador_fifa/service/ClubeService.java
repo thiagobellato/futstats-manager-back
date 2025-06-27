@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
 import br.com.bellato.gerenciador_fifa.mapper.clube.ClubeMapper;
 import br.com.bellato.gerenciador_fifa.model.Clube;
@@ -17,11 +18,11 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ClubeService {
     @Autowired
-    private ClubeRepository ClubeRepository;
+    private ClubeRepository clubeRepository;
 
     public List<Clube> obterTodos() {
 
-        List<Clube> tipos = ClubeRepository.findAll();
+        List<Clube> tipos = clubeRepository.findAll();
 
         return tipos
                 .stream()
@@ -30,7 +31,7 @@ public class ClubeService {
 
     public Clube obterPorId(long id) {
 
-        Optional<Clube> optTipo = ClubeRepository.findById(id);
+        Optional<Clube> optTipo = clubeRepository.findById(id);
 
         if (optTipo.isEmpty()) {
             throw new RuntimeException("Nenhum registro encontrado para o ID: " + id);
@@ -42,42 +43,51 @@ public class ClubeService {
     public ClubeResponseDTO adicionar(ClubeRequestDTO dto) {
 
         Clube clube = ClubeMapper.toEntity(dto);
-        Clube salvo = ClubeRepository.save(clube);
+        Clube salvo = clubeRepository.save(clube);
 
         return ClubeMapper.toDTO(salvo);
     }
 
-    public List<Clube> adicionarEmLote(List<Clube> clubes) {
-        return ClubeRepository.saveAll(clubes);
-    }
+    public List<ClubeResponseDTO> adicionarEmLote(List<ClubeRequestDTO> dtos) {
+    List<Clube> clubes = dtos.stream()
+        .map(ClubeMapper::toEntity) // Converte cada DTO para entidade
+        .collect(Collectors.toList());
+
+    List<Clube> salvos = clubeRepository.saveAll(clubes); // Salva todos de uma vez
+
+    return salvos.stream()
+        .map(ClubeMapper::toDTO) // Converte os salvos para response DTOs
+        .collect(Collectors.toList());
+}
+
 
     public boolean apagarPorId(Long id) {
-        Optional<Clube> ClubeOptional = ClubeRepository.findById(id);
+        Optional<Clube> ClubeOptional = clubeRepository.findById(id);
         if (ClubeOptional.isPresent()) {
-            ClubeRepository.deleteById(id);
+            clubeRepository.deleteById(id);
             return true;
         } else {
             return false;
         }
     }
 
-    public Clube atualizarPorId(Long id, Clube dadosAtualizados) {
-        Clube ClubeExistente = ClubeRepository.findById(id)
+    public ClubeResponseCompletoDTO atualizarPorId(Long id, ClubeRequestDTO dadosAtualizados) {
+        Clube clubeExistente = clubeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com o ID: " + id));
 
-        // Atualiza apenas os campos não nulos de dadosAtualizados
         if (dadosAtualizados.getNome() != null) {
-            ClubeExistente.setNome(dadosAtualizados.getNome());
+            clubeExistente.setNome(dadosAtualizados.getNome());
         }
         if (dadosAtualizados.getPais() != null) {
-            ClubeExistente.setPais(dadosAtualizados.getPais());
+            clubeExistente.setPais(dadosAtualizados.getPais());
         }
-
         if (dadosAtualizados.getSigla() != null) {
-            ClubeExistente.setSigla(dadosAtualizados.getSigla());
+            clubeExistente.setSigla(dadosAtualizados.getSigla());
         }
-        // Salva o Clube atualizado no banco de dados
-        return ClubeRepository.save(ClubeExistente);
-    }
 
+        Clube clubeAtualizado = clubeRepository.save(clubeExistente);
+
+        // Aqui é onde usamos o mapper, em vez de um construtor
+        return ClubeMapper.toDTOCompleto(clubeAtualizado);
+    }
 }

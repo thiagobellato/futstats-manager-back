@@ -1,10 +1,10 @@
 package br.com.bellato.gerenciador_fifa.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.clube.ClubeMapper;
 import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.service.ClubeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,12 +26,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@CrossOrigin("*")
+// @CrossOrigin("*")
 @RequestMapping("/api/clube")
 @Tag(name = "Métodos do Clube")
 public class ClubeController {
     @Autowired
-    private ClubeService ClubeService;
+    private ClubeService clubeService;
 
     @GetMapping
     @Operation(summary = "Método para listar todos os Clubes cadastrados")
@@ -39,9 +41,12 @@ public class ClubeController {
             @ApiResponse(responseCode = "500", description = "Erro ao listar os Clubes"),
             @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<List<Clube>> obterTodos() {
-
-        return ResponseEntity.ok(ClubeService.obterTodos());
+    public ResponseEntity<List<ClubeResponseCompletoDTO>> obterTodos() {
+        List<Clube> clubes = clubeService.obterTodos();
+        List<ClubeResponseCompletoDTO> dtos = clubes.stream()
+                .map(ClubeMapper::toDTOCompleto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
@@ -53,9 +58,10 @@ public class ClubeController {
             @ApiResponse(responseCode = "500", description = "Erro ao listar os Clubes"),
             @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<Clube> obterPorId(@PathVariable Long id) {
-
-        return ResponseEntity.ok(ClubeService.obterPorId(id));
+    public ResponseEntity<ClubeResponseCompletoDTO> obterPorId(@PathVariable Long id) {
+        Clube clube = clubeService.obterPorId(id); // Busca a entidade Clube pelo ID
+        ClubeResponseCompletoDTO dto = ClubeMapper.toDTOCompleto(clube); // Converte a entidade para DTO
+        return ResponseEntity.ok(dto); // Retorna o DTO para o cliente
     }
 
     @PostMapping("/adicionar")
@@ -67,7 +73,7 @@ public class ClubeController {
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
     public ResponseEntity<ClubeResponseDTO> adicionar(@RequestBody ClubeRequestDTO dto) {
-        ClubeResponseDTO response = ClubeService.adicionar(dto);
+        ClubeResponseDTO response = clubeService.adicionar(dto);
         return ResponseEntity.status(201).body(response);
     }
 
@@ -75,12 +81,12 @@ public class ClubeController {
     @Operation(summary = "Método para adicionar uma lista de Clubes")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Clubes adicionados com sucesso!"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos ou incompletos"),
+            @ApiResponse(responseCode = "404", description = "Não foi possível adicionar os Clubes"),
             @ApiResponse(responseCode = "500", description = "Erro ao adicionar os Clubes"),
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
-    public ResponseEntity<List<Clube>> adicionarEmLote(@RequestBody List<Clube> clubes) {
-        List<Clube> clubesSalvos = ClubeService.adicionarEmLote(clubes);
+    public ResponseEntity<List<ClubeResponseDTO>> adicionarEmLote(@RequestBody List<ClubeRequestDTO> clubes) {
+        List<ClubeResponseDTO> clubesSalvos = clubeService.adicionarEmLote(clubes);
         return ResponseEntity.status(201).body(clubesSalvos);
     }
 
@@ -93,7 +99,7 @@ public class ClubeController {
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
     public ResponseEntity<Void> apagarPorId(@PathVariable Long id) {
-        boolean apagado = ClubeService.apagarPorId(id);
+        boolean apagado = clubeService.apagarPorId(id);
         if (apagado) {
             return ResponseEntity.ok().build(); // Retorna 200 OK sem corpo
         } else {
@@ -103,16 +109,19 @@ public class ClubeController {
     }
 
     @PutMapping("/atualizar/{id}")
-    @Operation(summary = "Método para atualizar Clubes")
+    @Operation(summary = "Atualiza um clube existente por ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Clube atualizado com sucesso!"),
             @ApiResponse(responseCode = "404", description = "Clube não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro ao atualizar o Clube"),
-            @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
+            @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado")
     })
-    public ResponseEntity<Clube> atualizarPorId(@PathVariable Long id, @RequestBody Clube dadosAtualizados) {
-        Clube ClubeAtualizado = ClubeService.atualizarPorId(id, dadosAtualizados);
-        return ResponseEntity.ok(ClubeAtualizado);
+    public ResponseEntity<ClubeResponseCompletoDTO> atualizarPorId(
+            @PathVariable Long id,
+            @RequestBody ClubeRequestDTO dadosAtualizados) {
+
+        ClubeResponseCompletoDTO clubeAtualizado = clubeService.atualizarPorId(id, dadosAtualizados);
+        return ResponseEntity.ok(clubeAtualizado);
     }
 
 }
