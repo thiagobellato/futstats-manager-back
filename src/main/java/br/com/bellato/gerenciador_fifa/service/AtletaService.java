@@ -1,6 +1,7 @@
 package br.com.bellato.gerenciador_fifa.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,11 @@ public class AtletaService {
     private ClubeRepository clubeRepository; // ✅ Corrigido aqui
 
     public List<Atleta> obterTodos() {
-        return atletaRepository.findAll(); // ✅ mais direto
+        List<Atleta> tipos = atletaRepository.findAll();
+
+        return tipos
+                .stream()
+                .collect(Collectors.toList());
     }
 
     public Atleta obterPorId(long id) {

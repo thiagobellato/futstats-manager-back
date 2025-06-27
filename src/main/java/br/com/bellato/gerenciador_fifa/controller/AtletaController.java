@@ -1,6 +1,7 @@
 package br.com.bellato.gerenciador_fifa.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.atleta.AtletaMapper;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
 import br.com.bellato.gerenciador_fifa.service.AtletaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,9 +42,11 @@ public class AtletaController {
             @ApiResponse(responseCode = "500", description = "Erro ao listar os Atletas"),
             @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<List<Atleta>> obterTodos() {
-
-        return ResponseEntity.ok(atletaService.obterTodos());
+    public ResponseEntity<List<AtletaResponseCompletoDTO>> obterTodos() {
+        List<Atleta> atletas = atletaService.obterTodos();
+        List<AtletaResponseCompletoDTO> dtos = atletas.stream().map(AtletaMapper::toDTOCompleto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")

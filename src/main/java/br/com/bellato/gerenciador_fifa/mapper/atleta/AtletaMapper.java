@@ -1,6 +1,9 @@
 package br.com.bellato.gerenciador_fifa.mapper.atleta;
 
+import org.apache.commons.lang3.StringUtils;
+
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
 import br.com.bellato.gerenciador_fifa.model.Clube;
@@ -11,10 +14,7 @@ public class AtletaMapper {
         Atleta atleta = new Atleta();
         atleta.setNome(dto.getNome());
         atleta.setClube(clube);
-        // atleta.setSobrenome(dto.getSobrenome());
-        // atleta.setDataDeNascimento(dto.getDataDeNascimento());
-        // atleta.setNacionalidade(dto.getNacionalidade());
-        // atleta.setPosicao(dto.getPosicao());
+
         return atleta;
     }
 
@@ -22,14 +22,27 @@ public class AtletaMapper {
         AtletaResponseDTO dto = new AtletaResponseDTO();
         dto.setAtletaId(atleta.getAtletaId());
         dto.setNome(atleta.getNome());
-        dto.setPosicao(atleta.getPosicao());
 
-        // dto.setClubeNome(atleta.getClube().getNome());
-
-        if (atleta.getClube() != null) {
+        if (atleta.getClube() != null && StringUtils.isNotBlank(atleta.getClube().getNome())) {
             dto.setClubeNome(atleta.getClube().getNome());
         } else {
-            dto.setClubeNome("Sem Clube"); // Ou uma string padrão, tipo "Sem clube"
+            dto.setClubeNome("Sem Clube");
+        }
+        return dto;
+    }
+
+    public static AtletaResponseCompletoDTO toDTOCompleto(Atleta atleta) {
+        AtletaResponseCompletoDTO dto = new AtletaResponseCompletoDTO();
+        dto.setAtletaId(atleta.getAtletaId());
+        dto.setNome(atleta.getNome());
+        dto.setSobrenome(atleta.getSobrenome());
+        dto.setPosicao(atleta.getPosicao());
+        dto.setNacionalidade(atleta.getNacionalidade());
+
+        if (atleta.getClube() != null && StringUtils.isNotBlank(atleta.getClube().getNome())) {
+            dto.setClubeNome(atleta.getClube().getNome());
+        } else {
+            dto.setClubeNome("Sem Clube");
         }
         return dto;
     }

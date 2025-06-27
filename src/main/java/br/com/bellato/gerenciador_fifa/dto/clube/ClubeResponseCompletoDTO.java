@@ -1,5 +1,8 @@
 package br.com.bellato.gerenciador_fifa.dto.clube;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClubeResponseCompletoDTO {
 
     public Long clubeId;
@@ -37,22 +40,6 @@ public class ClubeResponseCompletoDTO {
 
     public void setPais(String pais) {
         this.pais = pais;
-    }
-
-    public ClubeResponseCompletoDTO(Long clubeId, String nome, String sigla, String pais) {
-        this.clubeId = clubeId;
-        this.nome = nome;
-        this.sigla = sigla;
-        this.pais = pais;
-    }
-
-    public ClubeResponseCompletoDTO() {
-    }
-
-    @Override
-    public String toString() {
-        return "ClubeResponseCompletoDTO [clubeId=" + clubeId + ", nome=" + nome + ", sigla=" + sigla + ", pais=" + pais
-                + "]";
     }
 
 }

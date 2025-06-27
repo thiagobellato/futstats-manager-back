@@ -1,17 +1,12 @@
 package br.com.bellato.gerenciador_fifa.dto.atleta;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AtletaRequestDTO {
 
-    private String nome;
     private Long clubeId;
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    private String nome;
 
     public Long getClubeId() {
         return clubeId;
@@ -19,6 +14,14 @@ public class AtletaRequestDTO {
 
     public void setClubeId(Long clubeId) {
         this.clubeId = clubeId;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
 }

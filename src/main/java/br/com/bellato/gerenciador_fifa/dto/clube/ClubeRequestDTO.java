@@ -1,5 +1,8 @@
 package br.com.bellato.gerenciador_fifa.dto.clube;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClubeRequestDTO {
 
     private String nome;

@@ -1,13 +1,13 @@
 package br.com.bellato.gerenciador_fifa.dto.atleta;
 
-import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AtletaResponseDTO {
 
     private long atletaId;
     private String clubeNome;
     private String nome;
-    private PosicaoFutebol posicao;
 
     public long getAtletaId() {
         return atletaId;
@@ -31,14 +31,6 @@ public class AtletaResponseDTO {
 
     public void setNome(String nome) {
         this.nome = nome;
-    }
-
-    public PosicaoFutebol getPosicao() {
-        return posicao;
-    }
-
-    public void setPosicao(PosicaoFutebol posicao) {
-        this.posicao = posicao;
     }
 
 }

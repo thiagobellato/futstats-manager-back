@@ -11,19 +11,6 @@ public class EstatisticaAtletaRequestDTO {
     private LocalDate dataInicio;
     private LocalDate dataFim;
 
-    public EstatisticaAtletaRequestDTO() {
-    }
-
-    public EstatisticaAtletaRequestDTO(Long clube_id, Long atleta_id, Integer gols, Integer assistencias,
-            LocalDate dataInicio, LocalDate dataFim) {
-        this.clube_id = clube_id;
-        this.atleta_id = atleta_id;
-        this.gols = gols;
-        this.assistencias = assistencias;
-        this.dataInicio = dataInicio;
-        this.dataFim = dataFim;
-    }
-
     public Long getClube_id() {
         return clube_id;
     }
@@ -70,12 +57,6 @@ public class EstatisticaAtletaRequestDTO {
 
     public void setDataFim(LocalDate dataFim) {
         this.dataFim = dataFim;
-    }
-
-    @Override
-    public String toString() {
-        return "EstatisticaAtletaRequestDTO [clube_id=" + clube_id + ", atleta_id=" + atleta_id + ", gols=" + gols
-                + ", assistencias=" + assistencias + ", dataInicio=" + dataInicio + ", dataFim=" + dataFim + "]";
     }
 
 }
