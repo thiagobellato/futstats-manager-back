@@ -49,17 +49,16 @@ public class ClubeService {
     }
 
     public List<ClubeResponseDTO> adicionarEmLote(List<ClubeRequestDTO> dtos) {
-    List<Clube> clubes = dtos.stream()
-        .map(ClubeMapper::toEntity) // Converte cada DTO para entidade
-        .collect(Collectors.toList());
+        List<Clube> clubes = dtos.stream()
+                .map(ClubeMapper::toEntity) // Converte cada DTO para entidade
+                .collect(Collectors.toList());
 
-    List<Clube> salvos = clubeRepository.saveAll(clubes); // Salva todos de uma vez
+        List<Clube> salvos = clubeRepository.saveAll(clubes); // Salva todos de uma vez
 
-    return salvos.stream()
-        .map(ClubeMapper::toDTO) // Converte os salvos para response DTOs
-        .collect(Collectors.toList());
-}
-
+        return salvos.stream()
+                .map(ClubeMapper::toDTO) // Converte os salvos para response DTOs
+                .collect(Collectors.toList());
+    }
 
     public boolean apagarPorId(Long id) {
         Optional<Clube> ClubeOptional = clubeRepository.findById(id);
@@ -75,13 +74,13 @@ public class ClubeService {
         Clube clubeExistente = clubeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com o ID: " + id));
 
-        if (dadosAtualizados.getNome() != null) {
+        if (dadosAtualizados.getNome() != null && !dadosAtualizados.getNome().isBlank()) {
             clubeExistente.setNome(dadosAtualizados.getNome());
         }
-        if (dadosAtualizados.getPais() != null) {
+        if (dadosAtualizados.getPais() != null && !dadosAtualizados.getPais().isBlank()) {
             clubeExistente.setPais(dadosAtualizados.getPais());
         }
-        if (dadosAtualizados.getSigla() != null) {
+        if (dadosAtualizados.getSigla() != null && !dadosAtualizados.getSigla().isBlank()) {
             clubeExistente.setSigla(dadosAtualizados.getSigla());
         }
 
