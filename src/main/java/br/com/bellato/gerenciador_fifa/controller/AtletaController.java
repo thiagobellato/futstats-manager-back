@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestAtualizarDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
@@ -58,9 +59,11 @@ public class AtletaController {
             @ApiResponse(responseCode = "500", description = "Erro ao listar os Atletas"),
             @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<Atleta> obterPorId(@PathVariable Long id) {
+    public ResponseEntity<AtletaResponseCompletoDTO> obterPorId(@PathVariable Long id) {
+        Atleta atleta = atletaService.obterPorId(id);
+        AtletaResponseCompletoDTO dto = AtletaMapper.toDTOCompleto(atleta);
 
-        return ResponseEntity.ok(atletaService.obterPorId(id));
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/adicionar")
@@ -84,8 +87,8 @@ public class AtletaController {
             @ApiResponse(responseCode = "500", description = "Erro ao adicionar os Atletas"),
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
-    public ResponseEntity<List<Atleta>> adicionarEmLote(@RequestBody List<Atleta> atletas) {
-        List<Atleta> atletasSalvos = atletaService.adicionarEmLote(atletas);
+    public ResponseEntity<List<AtletaResponseDTO>> adicionarEmLote(@RequestBody List<AtletaRequestDTO> atletas) {
+        List<AtletaResponseDTO> atletasSalvos = atletaService.adicionarEmLote(atletas);
         return ResponseEntity.status(201).body(atletasSalvos);
     }
 
@@ -115,8 +118,10 @@ public class AtletaController {
             @ApiResponse(responseCode = "500", description = "Erro ao atualizar o Atleta"),
             @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
     })
-    public ResponseEntity<Atleta> atualizarPorId(@PathVariable Long id, @RequestBody Atleta dadosAtualizados) {
-        Atleta atletaAtualizado = atletaService.atualizarPorId(id, dadosAtualizados);
+    public ResponseEntity<AtletaResponseCompletoDTO> atualizarPorId(@PathVariable Long id,
+            @RequestBody AtletaRequestAtualizarDTO dadosAtualizados) {
+
+        AtletaResponseCompletoDTO atletaAtualizado = atletaService.atualizarPorId(id, dadosAtualizados);
         return ResponseEntity.ok(atletaAtualizado);
     }
 

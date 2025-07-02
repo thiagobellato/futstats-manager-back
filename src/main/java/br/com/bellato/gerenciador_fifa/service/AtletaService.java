@@ -6,7 +6,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestAtualizarDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.mapper.atleta.AtletaMapper;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
@@ -38,10 +40,6 @@ public class AtletaService {
     }
 
     public AtletaResponseDTO adicionar(AtletaRequestDTO dto) {
-        // ✅ Busca o clube pelo ID
-        // Clube clube = clubeRepository.findById(dto.getClubeId())
-        // .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " +
-        // dto.getClubeId()));
 
         Clube clube = null;
         if (dto.getClubeId() != null) {
@@ -49,14 +47,26 @@ public class AtletaService {
                     .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + dto.getClubeId()));
         }
 
-        // ✅ Usa o mapper passando o clube já instanciado
         Atleta atleta = AtletaMapper.toEntity(dto, clube);
         Atleta salvo = atletaRepository.save(atleta);
         return AtletaMapper.toDTO(salvo);
     }
 
-    public List<Atleta> adicionarEmLote(List<Atleta> atletas) {
-        return atletaRepository.saveAll(atletas);
+    public List<AtletaResponseDTO> adicionarEmLote(List<AtletaRequestDTO> dtos) {
+        List<Atleta> atletas = dtos.stream()
+                .map(dto -> {
+                    Clube clube = clubeRepository.findById(dto.getClubeId())
+                            .orElseThrow(
+                                    () -> new RuntimeException("Clube não encontrado para o ID: " + dto.getClubeId()));
+                    return AtletaMapper.toEntity(dto, clube);
+                })
+                .collect(Collectors.toList());
+
+        List<Atleta> salvos = atletaRepository.saveAll(atletas);
+
+        return salvos.stream()
+                .map(AtletaMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     public boolean apagarPorId(Long id) {
@@ -67,26 +77,27 @@ public class AtletaService {
         return false;
     }
 
-    public Atleta atualizarPorId(Long id, Atleta dadosAtualizados) {
+    public AtletaResponseCompletoDTO atualizarPorId(Long id, AtletaRequestAtualizarDTO dadosAtualizados) {
         Atleta atletaExistente = atletaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Atleta não encontrado com o ID: " + id));
 
-        if (dadosAtualizados.getNome() != null) {
+        if (dadosAtualizados.getNome() != null && !dadosAtualizados.getNome().isBlank()) {
             atletaExistente.setNome(dadosAtualizados.getNome());
         }
-        if (dadosAtualizados.getSobrenome() != null) {
+        if (dadosAtualizados.getSobrenome() != null && !dadosAtualizados.getSobrenome().isBlank()) {
             atletaExistente.setSobrenome(dadosAtualizados.getSobrenome());
         }
         if (dadosAtualizados.getDataDeNascimento() != null) {
             atletaExistente.setDataDeNascimento(dadosAtualizados.getDataDeNascimento());
         }
-        if (dadosAtualizados.getNacionalidade() != null) {
+        if (dadosAtualizados.getNacionalidade() != null && !dadosAtualizados.getNacionalidade().isBlank()) {
             atletaExistente.setNacionalidade(dadosAtualizados.getNacionalidade());
         }
         if (dadosAtualizados.getPosicao() != null) {
             atletaExistente.setPosicao(dadosAtualizados.getPosicao());
         }
 
-        return atletaRepository.save(atletaExistente);
+        Atleta atualizado = atletaRepository.save(atletaExistente);
+        return AtletaMapper.toDTOCompleto(atualizado);
     }
 }
