@@ -38,6 +38,7 @@ public class AtletaMapper {
         dto.setSobrenome(atleta.getSobrenome());
         dto.setPosicao(atleta.getPosicao());
         dto.setNacionalidade(atleta.getNacionalidade());
+        dto.setDataDeNascimento(atleta.getDataDeNascimento());
 
         if (atleta.getClube() != null && StringUtils.isNotBlank(atleta.getClube().getNome())) {
             dto.setClubeNome(atleta.getClube().getNome());

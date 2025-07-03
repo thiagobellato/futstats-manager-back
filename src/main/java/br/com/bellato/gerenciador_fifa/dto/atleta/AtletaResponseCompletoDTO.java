@@ -1,5 +1,7 @@
 package br.com.bellato.gerenciador_fifa.dto.atleta;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol;
@@ -13,6 +15,7 @@ public class AtletaResponseCompletoDTO {
     private String sobrenome;
     private PosicaoFutebol posicao;
     private String nacionalidade;
+    private LocalDate dataDeNascimento;
 
     public long getAtletaId() {
         return atletaId;
@@ -60,6 +63,14 @@ public class AtletaResponseCompletoDTO {
 
     public void setNacionalidade(String nacionalidade) {
         this.nacionalidade = nacionalidade;
+    }
+
+    public LocalDate getDataDeNascimento() {
+        return dataDeNascimento;
+    }
+
+    public void setDataDeNascimento(LocalDate dataDeNascimento) {
+        this.dataDeNascimento = dataDeNascimento;
     }
 
 }
