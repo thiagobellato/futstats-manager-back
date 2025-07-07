@@ -96,6 +96,12 @@ public class AtletaService {
         if (dadosAtualizados.getPosicao() != null) {
             atletaExistente.setPosicao(dadosAtualizados.getPosicao());
         }
+        if (dadosAtualizados.getClubeId() != null) {
+            Clube clube = clubeRepository.findById(dadosAtualizados.getClubeId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Clube não encontrado com o ID: " + dadosAtualizados.getClubeId()));
+            atletaExistente.setClube(clube);
+        }
 
         Atleta atualizado = atletaRepository.save(atletaExistente);
         return AtletaMapper.toDTOCompleto(atualizado);

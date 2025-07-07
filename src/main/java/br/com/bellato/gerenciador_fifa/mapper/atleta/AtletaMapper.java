@@ -40,11 +40,14 @@ public class AtletaMapper {
         dto.setNacionalidade(atleta.getNacionalidade());
         dto.setDataDeNascimento(atleta.getDataDeNascimento());
 
-        if (atleta.getClube() != null && StringUtils.isNotBlank(atleta.getClube().getNome())) {
-            dto.setClubeNome(atleta.getClube().getNome());
+        if (atleta.getClube() != null) {
+            dto.setClubeNome(StringUtils.defaultIfBlank(atleta.getClube().getNome(), "Sem Clube"));
+            dto.setClubeId(atleta.getClube().getClubeId()); // <-- ADICIONE ISSO AQUI
         } else {
             dto.setClubeNome("Sem Clube");
+            dto.setClubeId(null); // <-- EVITA QUE FIQUE PRESO EM ALGUM VALOR
         }
+
         return dto;
     }
 }

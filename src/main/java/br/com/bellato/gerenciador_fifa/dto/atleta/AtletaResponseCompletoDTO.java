@@ -16,6 +16,7 @@ public class AtletaResponseCompletoDTO {
     private PosicaoFutebol posicao;
     private String nacionalidade;
     private LocalDate dataDeNascimento;
+    private Long clubeId;
 
     public long getAtletaId() {
         return atletaId;
@@ -71,6 +72,14 @@ public class AtletaResponseCompletoDTO {
 
     public void setDataDeNascimento(LocalDate dataDeNascimento) {
         this.dataDeNascimento = dataDeNascimento;
+    }
+
+    public Long getClubeId() {
+        return clubeId;
+    }
+
+    public void setClubeId(Long clubeId) {
+        this.clubeId = clubeId;
     }
 
 }
