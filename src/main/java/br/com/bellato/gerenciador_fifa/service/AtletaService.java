@@ -53,21 +53,26 @@ public class AtletaService {
     }
 
     public List<AtletaResponseDTO> adicionarEmLote(List<AtletaRequestDTO> dtos) {
-        List<Atleta> atletas = dtos.stream()
-                .map(dto -> {
-                    Clube clube = clubeRepository.findById(dto.getClubeId())
-                            .orElseThrow(
-                                    () -> new RuntimeException("Clube não encontrado para o ID: " + dto.getClubeId()));
-                    return AtletaMapper.toEntity(dto, clube);
-                })
-                .collect(Collectors.toList());
+    List<Atleta> atletas = dtos.stream()
+            .map(dto -> {
+                Clube clube = null;
 
-        List<Atleta> salvos = atletaRepository.saveAll(atletas);
+                if (dto.getClubeId() != null) {
+                    clube = clubeRepository.findById(dto.getClubeId())
+                            .orElseThrow(() -> new RuntimeException("Clube não encontrado para o ID: " + dto.getClubeId()));
+                }
 
-        return salvos.stream()
-                .map(AtletaMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+                return AtletaMapper.toEntity(dto, clube);
+            })
+            .collect(Collectors.toList());
+
+    List<Atleta> salvos = atletaRepository.saveAll(atletas);
+
+    return salvos.stream()
+            .map(AtletaMapper::toDTO)
+            .collect(Collectors.toList());
+}
+
 
     public boolean apagarPorId(Long id) {
         if (atletaRepository.existsById(id)) {
