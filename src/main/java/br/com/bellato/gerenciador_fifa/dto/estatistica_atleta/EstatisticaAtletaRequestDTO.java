@@ -2,14 +2,20 @@ package br.com.bellato.gerenciador_fifa.dto.estatistica_atleta;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class EstatisticaAtletaRequestDTO {
 
+    @JsonProperty("clube_id")
     private Long clube_id;
+
+    @JsonProperty("atleta_id")
     private Long atleta_id;
+
     private Integer gols;
     private Integer assistencias;
-    private LocalDate dataInicio;
-    private LocalDate dataFim;
+    private LocalDate dataInicio = LocalDate.now();
+    private LocalDate dataFim = null;
 
     public Long getClube_id() {
         return clube_id;

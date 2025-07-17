@@ -2,6 +2,7 @@ package br.com.bellato.gerenciador_fifa.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,11 @@ public class EstatisticaAtletaService {
     @Autowired
     private ClubeRepository clubeRepository;
 
-    public List<EstatisticaAtleta> obterTodas() {
-        return estatisticaRepository.findAll();
+    public List<EstatisticaAtleta> obterTodos() {
+        List<EstatisticaAtleta> tipos = estatisticaRepository.findAll();
+
+        return tipos.stream().collect(Collectors.toList());
+
     }
 
     public EstatisticaAtleta obterPorId(Long atletaId) {

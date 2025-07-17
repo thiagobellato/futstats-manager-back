@@ -1,6 +1,7 @@
 package br.com.bellato.gerenciador_fifa.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaResponseDTO;
+import br.com.bellato.gerenciador_fifa.mapper.estatistica_atleta.EstatisticaAtletaMapper;
 import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
 import br.com.bellato.gerenciador_fifa.service.EstatisticaAtletaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,10 +40,14 @@ public class EstatisticaAtletaController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estatísticas encontradas com sucesso!"),
             @ApiResponse(responseCode = "404", description = "Nenhuma estatística encontrada"),
-            @ApiResponse(responseCode = "500", description = "Erro ao listar estatísticas")
+            @ApiResponse(responseCode = "500", description = "Erro ao listar estatísticas"),
+            @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<List<EstatisticaAtleta>> obterTodas() {
-        return ResponseEntity.ok(estatisticaAtletaService.obterTodas());
+    public ResponseEntity<List<EstatisticaAtletaResponseDTO>> obterTodas() {
+        List<EstatisticaAtleta> estatisticaAtletas = estatisticaAtletaService.obterTodos();
+        List<EstatisticaAtletaResponseDTO> dtos = estatisticaAtletas.stream().map(EstatisticaAtletaMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
@@ -49,24 +55,26 @@ public class EstatisticaAtletaController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Estatística encontrada com sucesso!"),
             @ApiResponse(responseCode = "404", description = "Estatística não encontrada"),
-            @ApiResponse(responseCode = "500", description = "Erro ao buscar estatística")
+            @ApiResponse(responseCode = "500", description = "Erro ao buscar estatística"),
+            @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
     })
-    public ResponseEntity<EstatisticaAtleta> obterPorId(@PathVariable Long id) {
-        try {
-            EstatisticaAtleta estatistica = estatisticaAtletaService.obterPorId(id);
-            return ResponseEntity.ok(estatistica);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<EstatisticaAtletaResponseDTO> obterPorId(@PathVariable Long id) {
+        EstatisticaAtleta estatisticaAtleta = estatisticaAtletaService.obterPorId(id);
+        EstatisticaAtletaResponseDTO dto = EstatisticaAtletaMapper.toDTO(estatisticaAtleta);
+
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/adicionar")
     @Operation(summary = "Método para adicionar estatística de atleta")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Estatística adicionada com sucesso!"),
-            @ApiResponse(responseCode = "500", description = "Erro ao adicionar estatística")
+            @ApiResponse(responseCode = "404", description = "Não foi possível adicionar a Estatística"),
+            @ApiResponse(responseCode = "500", description = "Erro ao adicionar a Estatística"),
+            @ApiResponse(responseCode = "504", description = "Tempo de operação esgotado")
     })
-    public ResponseEntity<EstatisticaAtletaResponseDTO> adicionar(@RequestBody EstatisticaAtletaRequestDTO estatistica) {
+    public ResponseEntity<EstatisticaAtletaResponseDTO> adicionar(
+            @RequestBody EstatisticaAtletaRequestDTO estatistica) {
         EstatisticaAtletaResponseDTO novaEstatistica = estatisticaAtletaService.adicionar(estatistica);
         return ResponseEntity.status(201).body(novaEstatistica);
     }

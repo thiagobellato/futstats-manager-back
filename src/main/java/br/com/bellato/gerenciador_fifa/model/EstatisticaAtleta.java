@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -19,11 +20,11 @@ public class EstatisticaAtleta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "atleta_id", nullable = false)
     private Atleta atleta;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clube_id", nullable = false)
     private Clube clube;
 
@@ -45,7 +46,7 @@ public class EstatisticaAtleta {
     public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer assistencias,
             LocalDate dataInicio, LocalDate dataFim) {
         this.id = id;
-        // this.atleta = atleta;
+        this.atleta = atleta;
         this.clube = clube;
         this.gols = gols;
         this.assistencias = assistencias;

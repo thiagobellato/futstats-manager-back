@@ -4,6 +4,16 @@ public class EstatisticaAtletaResponseDTO {
 
     private Long estatisticaAtletaId;
     private String nomeAtleta;
+    private String nomeClube;
+
+    public String getNomeClube() {
+        return nomeClube;
+    }
+
+    public void setNomeClube(String nomeClube) {
+        this.nomeClube = nomeClube;
+    }
+
     private Integer gols;
     private Integer assistencias;
 
