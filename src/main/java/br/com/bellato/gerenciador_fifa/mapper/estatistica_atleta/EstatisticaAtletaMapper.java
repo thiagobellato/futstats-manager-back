@@ -1,5 +1,7 @@
 package br.com.bellato.gerenciador_fifa.mapper.estatistica_atleta;
 
+import java.time.LocalDate;
+
 import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
@@ -14,8 +16,7 @@ public class EstatisticaAtletaMapper {
         estatisticaAtleta.setAtleta(atleta);
         estatisticaAtleta.setGols(dto.getGols());
         estatisticaAtleta.setAssistencias(dto.getAssistencias());
-        estatisticaAtleta.setDataInicio(dto.getDataInicio());
-        estatisticaAtleta.setDataFim(dto.getDataFim());
+        estatisticaAtleta.setDataInicio(LocalDate.now());
 
         return estatisticaAtleta;
 
@@ -23,7 +24,7 @@ public class EstatisticaAtletaMapper {
 
     public static EstatisticaAtletaResponseDTO toDTO(EstatisticaAtleta estatisticaAtleta) {
         EstatisticaAtletaResponseDTO dto = new EstatisticaAtletaResponseDTO();
-        dto.setEstatisticaAtletaId(estatisticaAtleta.getId());
+        dto.setEstatisticaAtletaId(null);
         dto.setNomeAtleta(estatisticaAtleta.getAtleta().getNome());
         dto.setNomeClube(estatisticaAtleta.getClube().getNome());
         dto.setGols(estatisticaAtleta.getGols());

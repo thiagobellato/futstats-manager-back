@@ -2,13 +2,13 @@ package br.com.bellato.gerenciador_fifa.dto.estatistica_atleta;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class EstatisticaAtletaRequestDTO {
+public class EstatisticaAtletaRequestAtualizarDTO {
 
-   @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long atletaId;
+    private Long clubeId;
     private Integer gols;
     private Integer assistencias;
-    private Long atletaId;
-    private Long ClubeId;
 
     public Long getAtletaId() {
         return atletaId;
@@ -19,11 +19,11 @@ public class EstatisticaAtletaRequestDTO {
     }
 
     public Long getClubeId() {
-        return ClubeId;
+        return clubeId;
     }
 
     public void setClubeId(Long clubeId) {
-        ClubeId = clubeId;
+        this.clubeId = clubeId;
     }
 
     public Integer getGols() {

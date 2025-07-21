@@ -10,11 +10,15 @@ import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestAtualizarDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
+import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.mapper.atleta.AtletaMapper;
+import br.com.bellato.gerenciador_fifa.mapper.estatistica_atleta.EstatisticaAtletaMapper;
 import br.com.bellato.gerenciador_fifa.model.Atleta;
 import br.com.bellato.gerenciador_fifa.model.Clube;
+import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
 import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
+import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -24,7 +28,10 @@ public class AtletaService {
     private AtletaRepository atletaRepository;
 
     @Autowired
-    private ClubeRepository clubeRepository; // ✅ Corrigido aqui
+    private ClubeRepository clubeRepository;
+
+    @Autowired
+    private EstatisticaAtletaRepository estatisticaAtletaRepository;
 
     public List<Atleta> obterTodos() {
         List<Atleta> tipos = atletaRepository.findAll();
@@ -53,26 +60,41 @@ public class AtletaService {
     }
 
     public List<AtletaResponseDTO> adicionarEmLote(List<AtletaRequestDTO> dtos) {
-    List<Atleta> atletas = dtos.stream()
-            .map(dto -> {
-                Clube clube = null;
+        List<Atleta> atletas = dtos.stream()
+                .map(dto -> {
+                    Clube clube = null;
 
-                if (dto.getClubeId() != null) {
-                    clube = clubeRepository.findById(dto.getClubeId())
-                            .orElseThrow(() -> new RuntimeException("Clube não encontrado para o ID: " + dto.getClubeId()));
-                }
+                    // Apenas busca o clube se o ID não for nulo
+                    if (dto.getClubeId() != null) {
+                        clube = clubeRepository.findById(dto.getClubeId()).orElse(null);
+                    }
 
-                return AtletaMapper.toEntity(dto, clube);
-            })
-            .collect(Collectors.toList());
+                    return AtletaMapper.toEntity(dto, clube);
+                })
+                .collect(Collectors.toList());
 
-    List<Atleta> salvos = atletaRepository.saveAll(atletas);
+        List<Atleta> salvos = atletaRepository.saveAll(atletas);
 
-    return salvos.stream()
-            .map(AtletaMapper::toDTO)
-            .collect(Collectors.toList());
-}
+        // Gera estatísticas apenas para atletas que possuem clube
+        List<EstatisticaAtleta> estatisticas = salvos.stream()
+                .filter(a -> a.getClube() != null) // só gera se tiver clube
+                .map(atleta -> {
+                    EstatisticaAtletaRequestDTO estatistica = new EstatisticaAtletaRequestDTO();
+                    // estatistica.setAtletaId(atleta.getAtletaId());
+                    // estatistica.setClubeId(atleta.getClube().getClubeId());
+                    estatistica.setGols(0);
+                    estatistica.setAssistencias(0);
 
+                    return EstatisticaAtletaMapper.toEntity(estatistica, atleta.getClube(), atleta);
+                })
+                .collect(Collectors.toList());
+
+        estatisticaAtletaRepository.saveAll(estatisticas);
+
+        return salvos.stream()
+                .map(AtletaMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 
     public boolean apagarPorId(Long id) {
         if (atletaRepository.existsById(id)) {
