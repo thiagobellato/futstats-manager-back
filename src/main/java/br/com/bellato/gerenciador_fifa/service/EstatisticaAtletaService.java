@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
 
@@ -21,6 +22,21 @@ public class EstatisticaAtletaService {
 
         return tipos.stream().collect(Collectors.toList());
 
+    }
+
+    public EstatisticaAtletaResponseDTO buscarEstatisticaPorAtletaEClube(Long atletaId, Long clubeId) {
+        Optional<EstatisticaAtleta> estatisticaOptional = estatisticaRepository
+                .findByAtletaIdAndClubeId(atletaId, clubeId);
+
+        return estatisticaOptional.map(estatistica -> {
+            EstatisticaAtletaResponseDTO dto = new EstatisticaAtletaResponseDTO();
+            dto.setEstatisticaAtletaId(estatistica.getId());
+            dto.setNomeAtleta(estatistica.getAtleta().getNome()); // nome, não ID
+            dto.setNomeClube(estatistica.getClube().getNome()); // nome, não ID
+            dto.setGols(estatistica.getGols());
+            dto.setAssistencias(estatistica.getAssistencias());
+            return dto;
+        }).orElse(null);
     }
 
     public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias) {

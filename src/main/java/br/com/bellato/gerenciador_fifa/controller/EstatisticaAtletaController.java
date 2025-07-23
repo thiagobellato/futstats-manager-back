@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +46,32 @@ public class EstatisticaAtletaController {
                                 .map(EstatisticaAtletaMapper::toDTO)
                                 .collect(Collectors.toList());
                 return ResponseEntity.ok(dtos);
+        }
+
+        @GetMapping("/{atletaId}/{clubeId}")
+        @Operation(summary = "Método para listar todas as estatísticas cadastradas")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Estatística encontradas com sucesso!"),
+                        @ApiResponse(responseCode = "404", description = "Estatística não encontrada"),
+                        @ApiResponse(responseCode = "500", description = "Erro ao buscar estatística"),
+                        @ApiResponse(responseCode = "504", description = "Tempo da consulta esgotado"),
+        })
+        public ResponseEntity<?> buscarEstatisticaPorAtletaEClube(
+                        @PathVariable Long atletaId,
+                        @PathVariable Long clubeId) {
+                try {
+                        EstatisticaAtletaResponseDTO estatistica = estatisticaAtletaService
+                                        .buscarEstatisticaPorAtletaEClube(atletaId, clubeId);
+
+                        if (estatistica != null) {
+                                return ResponseEntity.ok(estatistica);
+                        } else {
+                                return ResponseEntity.status(404).body("Estatística não encontrada.");
+                        }
+                } catch (Exception e) {
+                        return ResponseEntity.status(500).body("Erro ao buscar estatística: " + e.getMessage());
+                }
+
         }
 
         @PutMapping("/atualizar")
