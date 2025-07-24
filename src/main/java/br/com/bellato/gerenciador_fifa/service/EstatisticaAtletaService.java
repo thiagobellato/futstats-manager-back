@@ -25,8 +25,13 @@ public class EstatisticaAtletaService {
     }
 
     public EstatisticaAtletaResponseDTO buscarEstatisticaPorAtletaEClube(Long atletaId, Long clubeId) {
-        Optional<EstatisticaAtleta> estatisticaOptional = estatisticaRepository
-                .findByAtletaIdAndClubeId(atletaId, clubeId);
+        Optional<EstatisticaAtleta> estatisticaOptional = estatisticaRepository.findEstatisticaAtiva(atletaId, clubeId);
+
+        if (estatisticaOptional.isEmpty()) {
+            throw new RuntimeException("Não há estatística ativa para esse atleta nesse clube.");
+        }
+
+        // Continua com a lógica de edição ou exibição
 
         return estatisticaOptional.map(estatistica -> {
             EstatisticaAtletaResponseDTO dto = new EstatisticaAtletaResponseDTO();
@@ -40,8 +45,7 @@ public class EstatisticaAtletaService {
     }
 
     public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias) {
-        Optional<EstatisticaAtleta> optionalEstatistica = estatisticaRepository.findByAtletaIdAndClubeId(atletaId,
-                clubeId);
+        Optional<EstatisticaAtleta> optionalEstatistica = estatisticaRepository.findEstatisticaAtiva(atletaId, clubeId);
 
         if (optionalEstatistica.isPresent()) {
             EstatisticaAtleta estatistica = optionalEstatistica.get();

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestAtualizarDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestTransferirDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.mapper.atleta.AtletaMapper;
@@ -123,6 +124,15 @@ public class AtletaController {
 
         AtletaResponseCompletoDTO atletaAtualizado = atletaService.atualizarPorId(id, dadosAtualizados);
         return ResponseEntity.ok(atletaAtualizado);
+    }
+
+    @PostMapping("/{id}/transferir")
+    public ResponseEntity<Void> transferirAtleta(
+            @PathVariable Long id,
+            @RequestBody AtletaRequestTransferirDTO dto) {
+
+        atletaService.transferirAtleta(id, dto);
+        return ResponseEntity.ok().build();
     }
 
 }

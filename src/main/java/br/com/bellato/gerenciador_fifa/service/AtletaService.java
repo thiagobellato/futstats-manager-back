@@ -1,13 +1,18 @@
 package br.com.bellato.gerenciador_fifa.service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestAtualizarDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaRequestTransferirDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.atleta.AtletaResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.estatistica_atleta.EstatisticaAtletaRequestDTO;
@@ -133,4 +138,42 @@ public class AtletaService {
         Atleta atualizado = atletaRepository.save(atletaExistente);
         return AtletaMapper.toDTOCompleto(atualizado);
     }
+
+    @Transactional
+    public void transferirAtleta(Long atletaId, AtletaRequestTransferirDTO dto) {
+        // 1. Buscar atleta
+        Atleta atleta = atletaRepository.findById(atletaId)
+                .orElseThrow(() -> new EntityNotFoundException("Atleta não encontrado com ID: " + atletaId));
+
+        // 2. Buscar novo clube
+        Clube novoClube = clubeRepository.findById(dto.getNovoClubeId())
+                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com ID: " + dto.getNovoClubeId()));
+
+        // 3. Verificar se o atleta já está no novo clube
+        if (atleta.getClube() != null && Objects.equals(atleta.getClube().getClubeId(), novoClube.getClubeId())) {
+            throw new IllegalArgumentException("O atleta já pertence a este clube.");
+        }
+
+        // 4. Tentar fechar estatística atual, se existir
+        Optional<EstatisticaAtleta> estatisticaAtualOpt = estatisticaAtletaRepository
+                .findByAtletaIdAndDataFimIsNull(atletaId);
+        estatisticaAtualOpt.ifPresent(estatistica -> {
+            estatistica.setDataFim(LocalDate.now());
+            estatisticaAtletaRepository.save(estatistica);
+        });
+
+        // 5. Criar nova estatística com novo clube
+        EstatisticaAtleta novaEstatistica = new EstatisticaAtleta();
+        novaEstatistica.setAtleta(atleta);
+        novaEstatistica.setClube(novoClube);
+        novaEstatistica.setDataInicio(LocalDate.now());
+        novaEstatistica.setGols(0);
+        novaEstatistica.setAssistencias(0);
+        estatisticaAtletaRepository.save(novaEstatistica);
+
+        // 6. Atualizar clube do atleta
+        atleta.setClube(novoClube);
+        atletaRepository.save(atleta);
+    }
+
 }
