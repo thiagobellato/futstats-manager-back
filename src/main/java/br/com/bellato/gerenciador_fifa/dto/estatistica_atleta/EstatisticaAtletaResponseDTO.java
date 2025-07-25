@@ -10,6 +10,15 @@ public class EstatisticaAtletaResponseDTO {
     private String nomeClube;
     private Integer gols;
     private Integer assistencias;
+    private Long atletaId;
+
+    public Long getAtletaId() {
+        return atletaId;
+    }
+
+    public void setAtletaId(Long atletaId) {
+        this.atletaId = atletaId;
+    }
 
     public Long getEstatisticaAtletaId() {
         return estatisticaAtletaId;

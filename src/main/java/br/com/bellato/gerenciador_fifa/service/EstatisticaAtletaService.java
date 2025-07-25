@@ -36,6 +36,7 @@ public class EstatisticaAtletaService {
         return estatisticaOptional.map(estatistica -> {
             EstatisticaAtletaResponseDTO dto = new EstatisticaAtletaResponseDTO();
             dto.setEstatisticaAtletaId(estatistica.getId());
+            dto.setAtletaId(estatistica.getAtleta().getAtletaId());
             dto.setNomeAtleta(estatistica.getAtleta().getNome()); // nome, não ID
             dto.setNomeClube(estatistica.getClube().getNome()); // nome, não ID
             dto.setGols(estatistica.getGols());

@@ -25,6 +25,7 @@ public class EstatisticaAtletaMapper {
     public static EstatisticaAtletaResponseDTO toDTO(EstatisticaAtleta estatisticaAtleta) {
         EstatisticaAtletaResponseDTO dto = new EstatisticaAtletaResponseDTO();
         dto.setEstatisticaAtletaId(null);
+        dto.setAtletaId(estatisticaAtleta.getAtleta().getAtletaId());
         dto.setNomeAtleta(estatisticaAtleta.getAtleta().getNome());
         dto.setNomeClube(estatisticaAtleta.getClube().getNome());
         dto.setGols(estatisticaAtleta.getGols());

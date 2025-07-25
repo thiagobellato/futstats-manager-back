@@ -126,6 +126,13 @@ public class AtletaController {
         return ResponseEntity.ok(atletaAtualizado);
     }
 
+    @Operation(summary = "Método para transferir Atletas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Atleta transferido com sucesso!"),
+            @ApiResponse(responseCode = "404", description = "Atleta não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro ao transferir o Atleta"),
+            @ApiResponse(responseCode = "504", description = "Tempo da operação esgotado"),
+    })
     @PostMapping("/{id}/transferir")
     public ResponseEntity<Void> transferirAtleta(
             @PathVariable Long id,
