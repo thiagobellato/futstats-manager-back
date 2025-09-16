@@ -4,7 +4,7 @@ Este é o backend da aplicação **futstats**, desenvolvido com **Java + Spring 
 
 ## 🚀 Tecnologias
 
-- Java 17+
+- Java 21+
 - Spring Boot
 - Spring Data JPA
 - Hibernate
