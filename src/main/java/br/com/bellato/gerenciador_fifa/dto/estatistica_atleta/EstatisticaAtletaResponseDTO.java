@@ -10,15 +10,9 @@ public class EstatisticaAtletaResponseDTO {
     private String nomeClube;
     private Integer gols;
     private Integer assistencias;
+    private Integer cartaoAmarelo;
+    private Integer cartaoVermelho;
     private Long atletaId;
-
-    public Long getAtletaId() {
-        return atletaId;
-    }
-
-    public void setAtletaId(Long atletaId) {
-        this.atletaId = atletaId;
-    }
 
     public Long getEstatisticaAtletaId() {
         return estatisticaAtletaId;
@@ -58,6 +52,30 @@ public class EstatisticaAtletaResponseDTO {
 
     public void setAssistencias(Integer assistencias) {
         this.assistencias = assistencias;
+    }
+
+    public Integer getCartaoAmarelo() {
+        return cartaoAmarelo;
+    }
+
+    public void setCartaoAmarelo(Integer cartaoAmarelo) {
+        this.cartaoAmarelo = cartaoAmarelo;
+    }
+
+    public Integer getCartaoVermelho() {
+        return cartaoVermelho;
+    }
+
+    public void setCartaoVermelho(Integer cartaoVermelho) {
+        this.cartaoVermelho = cartaoVermelho;
+    }
+
+    public Long getAtletaId() {
+        return atletaId;
+    }
+
+    public void setAtletaId(Long atletaId) {
+        this.atletaId = atletaId;
     }
 
 }

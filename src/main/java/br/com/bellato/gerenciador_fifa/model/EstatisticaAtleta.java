@@ -31,6 +31,12 @@ public class EstatisticaAtleta {
     @Column(name = "atletaGols")
     private Integer gols;
 
+    @Column(name = "atletaCartaoAmarelo")
+    private Integer cartaoAmarelo;
+
+    @Column(name = "atletaCartaoVermelho")
+    private Integer cartaoVermelho;
+
     @Column(name = "atletaAssistencias")
     private Integer assistencias;
 
@@ -43,12 +49,14 @@ public class EstatisticaAtleta {
     public EstatisticaAtleta() {
     }
 
-    public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer assistencias,
-            LocalDate dataInicio, LocalDate dataFim) {
+    public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer cartaoAmarelo,
+            Integer cartaoVermelho, Integer assistencias, LocalDate dataInicio, LocalDate dataFim) {
         this.id = id;
         this.atleta = atleta;
         this.clube = clube;
         this.gols = gols;
+        this.cartaoAmarelo = cartaoAmarelo;
+        this.cartaoVermelho = cartaoVermelho;
         this.assistencias = assistencias;
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
@@ -86,6 +94,22 @@ public class EstatisticaAtleta {
         this.gols = gols;
     }
 
+    public Integer getCartaoAmarelo() {
+        return cartaoAmarelo;
+    }
+
+    public void setCartaoAmarelo(Integer cartaoAmarelo) {
+        this.cartaoAmarelo = cartaoAmarelo;
+    }
+
+    public Integer getCartaoVermelho() {
+        return cartaoVermelho;
+    }
+
+    public void setCartaoVermelho(Integer cartaoVermelho) {
+        this.cartaoVermelho = cartaoVermelho;
+    }
+
     public Integer getAssistencias() {
         return assistencias;
     }
@@ -113,7 +137,8 @@ public class EstatisticaAtleta {
     @Override
     public String toString() {
         return "EstatisticaAtleta [id=" + id + ", atleta=" + atleta + ", clube=" + clube + ", gols=" + gols
-                + ", assistencias=" + assistencias + ", dataInicio=" + dataInicio + ", dataFim=" + dataFim + "]";
+                + ", cartaoAmarelo=" + cartaoAmarelo + ", cartaoVermelho=" + cartaoVermelho + ", assistencias="
+                + assistencias + ", dataInicio=" + dataInicio + ", dataFim=" + dataFim + "]";
     }
 
 }

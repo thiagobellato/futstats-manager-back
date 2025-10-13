@@ -41,17 +41,21 @@ public class EstatisticaAtletaService {
             dto.setNomeClube(estatistica.getClube().getNome()); // nome, não ID
             dto.setGols(estatistica.getGols());
             dto.setAssistencias(estatistica.getAssistencias());
+            dto.setCartaoAmarelo(estatistica.getCartaoAmarelo());
+            dto.setCartaoVermelho(estatistica.getCartaoVermelho());
             return dto;
         }).orElse(null);
     }
 
-    public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias) {
+    public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias, Integer cartaoAmarelo, Integer cartaoVermelho) {
         Optional<EstatisticaAtleta> optionalEstatistica = estatisticaRepository.findEstatisticaAtiva(atletaId, clubeId);
 
         if (optionalEstatistica.isPresent()) {
             EstatisticaAtleta estatistica = optionalEstatistica.get();
             estatistica.setGols(gols);
             estatistica.setAssistencias(assistencias);
+            estatistica.setCartaoAmarelo(cartaoAmarelo);
+            estatistica.setCartaoVermelho(cartaoVermelho);
             estatisticaRepository.save(estatistica);
             return true;
         }

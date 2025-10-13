@@ -13,6 +13,7 @@ public class AtletaMapper {
     public static Atleta toEntity(AtletaRequestDTO dto, Clube clube) {
         Atleta atleta = new Atleta();
         atleta.setNome(dto.getNome());
+        atleta.setPosicao(dto.getPosicao());
         atleta.setClube(clube);
 
         return atleta;

@@ -4,27 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class EstatisticaAtletaRequestDTO {
 
-   @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer gols;
     private Integer assistencias;
+    private Integer cartaoAmarelo;
+    private Integer cartaoVermelho;
     private Long atletaId;
     private Long ClubeId;
-
-    public Long getAtletaId() {
-        return atletaId;
-    }
-
-    public void setAtletaId(Long atletaId) {
-        this.atletaId = atletaId;
-    }
-
-    public Long getClubeId() {
-        return ClubeId;
-    }
-
-    public void setClubeId(Long clubeId) {
-        ClubeId = clubeId;
-    }
 
     public Integer getGols() {
         return gols;
@@ -40,6 +26,38 @@ public class EstatisticaAtletaRequestDTO {
 
     public void setAssistencias(Integer assistencias) {
         this.assistencias = assistencias;
+    }
+
+    public Integer getCartaoAmarelo() {
+        return cartaoAmarelo;
+    }
+
+    public void setCartaoAmarelo(Integer cartaoAmarelo) {
+        this.cartaoAmarelo = cartaoAmarelo;
+    }
+
+    public Integer getCartaoVermelho() {
+        return cartaoVermelho;
+    }
+
+    public void setCartaoVermelho(Integer cartaoVermelho) {
+        this.cartaoVermelho = cartaoVermelho;
+    }
+
+    public Long getAtletaId() {
+        return atletaId;
+    }
+
+    public void setAtletaId(Long atletaId) {
+        this.atletaId = atletaId;
+    }
+
+    public Long getClubeId() {
+        return ClubeId;
+    }
+
+    public void setClubeId(Long clubeId) {
+        ClubeId = clubeId;
     }
 
 }
