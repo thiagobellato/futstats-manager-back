@@ -153,6 +153,12 @@ public class CampeonatoMapper {
             dto.setClubeVencedorNome(partida.getClubeVencedor().getNome());
         }
 
+        dto.setGolsMandante(partida.getGolsMandante());
+        dto.setGolsVisitante(partida.getGolsVisitante());
+        dto.setDisputouPenaltis(partida.getDisputouPenaltis());
+        dto.setPenaltisMandante(partida.getPenaltisMandante());
+        dto.setPenaltisVisitante(partida.getPenaltisVisitante());
+
         return dto;
     }
 
@@ -168,6 +174,10 @@ public class CampeonatoMapper {
         dto.setCampeaoAnterior(clube.getCampeaoAnterior());
         dto.setExcluidoSorteio(clube.getExcluidoSorteio());
         dto.setEliminado(clube.getEliminado());
+        dto.setJogos(clube.getJogos() == null ? 0 : clube.getJogos());
+        dto.setGolsPro(clube.getGolsPro() == null ? 0 : clube.getGolsPro());
+        dto.setGolsContra(clube.getGolsContra() == null ? 0 : clube.getGolsContra());
+        dto.setSaldoGols(clube.getSaldoGols());
         if (atletasPorClube != null && clube.getCampeonatoClubeId() != null) {
             dto.setQuantidadeAtletas(atletasPorClube.getOrDefault(clube.getCampeonatoClubeId(), 0L));
         }

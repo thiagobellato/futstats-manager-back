@@ -57,6 +57,15 @@ public class CampeonatoClube {
     @Column(name = "campeonatoClubeEliminado")
     private Boolean eliminado = Boolean.FALSE;
 
+    @Column(name = "campeonatoClubeJogos")
+    private Integer jogos = 0;
+
+    @Column(name = "campeonatoClubeGolsPro")
+    private Integer golsPro = 0;
+
+    @Column(name = "campeonatoClubeGolsContra")
+    private Integer golsContra = 0;
+
     @OneToMany(mappedBy = "campeonatoClube")
     private List<CampeonatoAtleta> atletas = new ArrayList<>();
 
@@ -149,6 +158,36 @@ public class CampeonatoClube {
 
     public void setEliminado(Boolean eliminado) {
         this.eliminado = eliminado;
+    }
+
+    public Integer getJogos() {
+        return jogos;
+    }
+
+    public void setJogos(Integer jogos) {
+        this.jogos = jogos;
+    }
+
+    public Integer getGolsPro() {
+        return golsPro;
+    }
+
+    public void setGolsPro(Integer golsPro) {
+        this.golsPro = golsPro;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
+    }
+
+    public int getSaldoGols() {
+        int pro = golsPro == null ? 0 : golsPro;
+        int contra = golsContra == null ? 0 : golsContra;
+        return pro - contra;
     }
 
     public boolean isClassificado() {

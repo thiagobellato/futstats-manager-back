@@ -1,7 +1,11 @@
 package br.com.bellato.gerenciador_fifa.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import br.com.bellato.gerenciador_fifa.enums.StatusPartida;
 import br.com.bellato.gerenciador_fifa.enums.StatusPartida.StatusPartidaConverter;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -10,6 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 @Entity
@@ -43,6 +49,25 @@ public class CampeonatoPartida {
 
     @Column(name = "campeonatoPartidaOrdem")
     private Integer ordem;
+
+    @Column(name = "campeonatoPartidaGolsMandante")
+    private Integer golsMandante;
+
+    @Column(name = "campeonatoPartidaGolsVisitante")
+    private Integer golsVisitante;
+
+    @Column(name = "campeonatoPartidaDisputouPenaltis")
+    private Boolean disputouPenaltis = Boolean.FALSE;
+
+    @Column(name = "campeonatoPartidaPenaltisMandante")
+    private Integer penaltisMandante;
+
+    @Column(name = "campeonatoPartidaPenaltisVisitante")
+    private Integer penaltisVisitante;
+
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem ASC")
+    private List<CampeonatoPartidaEvento> eventos = new ArrayList<>();
 
     public CampeonatoPartida() {
     }
@@ -101,5 +126,53 @@ public class CampeonatoPartida {
 
     public void setOrdem(Integer ordem) {
         this.ordem = ordem;
+    }
+
+    public Integer getGolsMandante() {
+        return golsMandante;
+    }
+
+    public void setGolsMandante(Integer golsMandante) {
+        this.golsMandante = golsMandante;
+    }
+
+    public Integer getGolsVisitante() {
+        return golsVisitante;
+    }
+
+    public void setGolsVisitante(Integer golsVisitante) {
+        this.golsVisitante = golsVisitante;
+    }
+
+    public Boolean getDisputouPenaltis() {
+        return disputouPenaltis;
+    }
+
+    public void setDisputouPenaltis(Boolean disputouPenaltis) {
+        this.disputouPenaltis = disputouPenaltis;
+    }
+
+    public Integer getPenaltisMandante() {
+        return penaltisMandante;
+    }
+
+    public void setPenaltisMandante(Integer penaltisMandante) {
+        this.penaltisMandante = penaltisMandante;
+    }
+
+    public Integer getPenaltisVisitante() {
+        return penaltisVisitante;
+    }
+
+    public void setPenaltisVisitante(Integer penaltisVisitante) {
+        this.penaltisVisitante = penaltisVisitante;
+    }
+
+    public List<CampeonatoPartidaEvento> getEventos() {
+        return eventos;
+    }
+
+    public void setEventos(List<CampeonatoPartidaEvento> eventos) {
+        this.eventos = eventos;
     }
 }

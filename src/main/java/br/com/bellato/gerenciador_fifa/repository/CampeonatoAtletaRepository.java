@@ -12,5 +12,9 @@ public interface CampeonatoAtletaRepository extends JpaRepository<CampeonatoAtle
 
     List<CampeonatoAtleta> findByCampeonatoCampeonatoId(Long campeonatoId);
 
+    List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeId(Long campeonatoClubeId);
+
+    List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeIdIn(List<Long> campeonatoClubeIds);
+
     long countByCampeonatoCampeonatoId(Long campeonatoId);
 }

@@ -2,22 +2,14 @@ package br.com.bellato.gerenciador_fifa.dto.campeonato;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import br.com.bellato.gerenciador_fifa.enums.ClubRank;
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CampeonatoClubeResponseDTO {
+public class ClassificacaoClubeDTO {
 
     private Long campeonatoClubeId;
-    private Long clubeOrigemId;
     private String nome;
     private String sigla;
-    private String pais;
-    private ClubRank rank;
     private Integer competidorNumero;
-    private Boolean campeaoAnterior;
-    private Boolean excluidoSorteio;
     private Boolean eliminado;
-    private Long quantidadeAtletas;
     private Integer jogos;
     private Integer golsPro;
     private Integer golsContra;
@@ -29,14 +21,6 @@ public class CampeonatoClubeResponseDTO {
 
     public void setCampeonatoClubeId(Long campeonatoClubeId) {
         this.campeonatoClubeId = campeonatoClubeId;
-    }
-
-    public Long getClubeOrigemId() {
-        return clubeOrigemId;
-    }
-
-    public void setClubeOrigemId(Long clubeOrigemId) {
-        this.clubeOrigemId = clubeOrigemId;
     }
 
     public String getNome() {
@@ -55,22 +39,6 @@ public class CampeonatoClubeResponseDTO {
         this.sigla = sigla;
     }
 
-    public String getPais() {
-        return pais;
-    }
-
-    public void setPais(String pais) {
-        this.pais = pais;
-    }
-
-    public ClubRank getRank() {
-        return rank;
-    }
-
-    public void setRank(ClubRank rank) {
-        this.rank = rank;
-    }
-
     public Integer getCompetidorNumero() {
         return competidorNumero;
     }
@@ -79,36 +47,12 @@ public class CampeonatoClubeResponseDTO {
         this.competidorNumero = competidorNumero;
     }
 
-    public Boolean getCampeaoAnterior() {
-        return campeaoAnterior;
-    }
-
-    public void setCampeaoAnterior(Boolean campeaoAnterior) {
-        this.campeaoAnterior = campeaoAnterior;
-    }
-
-    public Boolean getExcluidoSorteio() {
-        return excluidoSorteio;
-    }
-
-    public void setExcluidoSorteio(Boolean excluidoSorteio) {
-        this.excluidoSorteio = excluidoSorteio;
-    }
-
     public Boolean getEliminado() {
         return eliminado;
     }
 
     public void setEliminado(Boolean eliminado) {
         this.eliminado = eliminado;
-    }
-
-    public Long getQuantidadeAtletas() {
-        return quantidadeAtletas;
-    }
-
-    public void setQuantidadeAtletas(Long quantidadeAtletas) {
-        this.quantidadeAtletas = quantidadeAtletas;
     }
 
     public Integer getJogos() {

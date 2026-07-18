@@ -35,6 +35,7 @@ public class CampeonatoResponseCompletoDTO {
     private List<CampeonatoRodadaResponseDTO> rodadas;
     private Boolean remanejamentoNecessario;
     private Boolean escolhaCampeaoNecessaria;
+    private CampeonatoEstatisticasDTO estatisticas;
 
     public Long getCampeonatoId() {
         return campeonatoId;
@@ -218,5 +219,13 @@ public class CampeonatoResponseCompletoDTO {
 
     public void setEscolhaCampeaoNecessaria(Boolean escolhaCampeaoNecessaria) {
         this.escolhaCampeaoNecessaria = escolhaCampeaoNecessaria;
+    }
+
+    public CampeonatoEstatisticasDTO getEstatisticas() {
+        return estatisticas;
+    }
+
+    public void setEstatisticas(CampeonatoEstatisticasDTO estatisticas) {
+        this.estatisticas = estatisticas;
     }
 }

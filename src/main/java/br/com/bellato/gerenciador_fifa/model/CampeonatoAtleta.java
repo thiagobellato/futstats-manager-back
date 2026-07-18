@@ -50,6 +50,18 @@ public class CampeonatoAtleta {
     @Convert(converter = PosicaoFutebolConverter.class)
     private PosicaoFutebol posicao;
 
+    @Column(name = "campeonatoAtletaGols")
+    private Integer gols = 0;
+
+    @Column(name = "campeonatoAtletaAssistencias")
+    private Integer assistencias = 0;
+
+    @Column(name = "campeonatoAtletaCartoesAmarelos")
+    private Integer cartoesAmarelos = 0;
+
+    @Column(name = "campeonatoAtletaCartoesVermelhos")
+    private Integer cartoesVermelhos = 0;
+
     public CampeonatoAtleta() {
     }
 
@@ -123,5 +135,37 @@ public class CampeonatoAtleta {
 
     public void setPosicao(PosicaoFutebol posicao) {
         this.posicao = posicao;
+    }
+
+    public Integer getGols() {
+        return gols;
+    }
+
+    public void setGols(Integer gols) {
+        this.gols = gols;
+    }
+
+    public Integer getAssistencias() {
+        return assistencias;
+    }
+
+    public void setAssistencias(Integer assistencias) {
+        this.assistencias = assistencias;
+    }
+
+    public Integer getCartoesAmarelos() {
+        return cartoesAmarelos;
+    }
+
+    public void setCartoesAmarelos(Integer cartoesAmarelos) {
+        this.cartoesAmarelos = cartoesAmarelos;
+    }
+
+    public Integer getCartoesVermelhos() {
+        return cartoesVermelhos;
+    }
+
+    public void setCartoesVermelhos(Integer cartoesVermelhos) {
+        this.cartoesVermelhos = cartoesVermelhos;
     }
 }

@@ -1,35 +1,45 @@
 package br.com.bellato.gerenciador_fifa.dto.campeonato;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.enums.StatusPartida;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CampeonatoPartidaResponseDTO {
+public class PartidaDetalheResponseDTO {
 
     private Long campeonatoPartidaId;
+    private Long campeonatoId;
     private Integer ordem;
     private StatusPartida status;
+
     private Long clubeMandanteId;
     private String clubeMandanteNome;
     private String clubeMandanteSigla;
     private ClubRank clubeMandanteRank;
     private Integer clubeMandanteCompetidor;
-    private Boolean clubeMandanteCampeaoAnterior;
+
     private Long clubeVisitanteId;
     private String clubeVisitanteNome;
     private String clubeVisitanteSigla;
     private ClubRank clubeVisitanteRank;
     private Integer clubeVisitanteCompetidor;
-    private Boolean clubeVisitanteCampeaoAnterior;
-    private Long clubeVencedorId;
-    private String clubeVencedorNome;
+
     private Integer golsMandante;
     private Integer golsVisitante;
     private Boolean disputouPenaltis;
     private Integer penaltisMandante;
     private Integer penaltisVisitante;
+
+    private Long clubeVencedorId;
+    private String clubeVencedorNome;
+
+    private List<CampeonatoAtletaPartidaDTO> atletasMandante = new ArrayList<>();
+    private List<CampeonatoAtletaPartidaDTO> atletasVisitante = new ArrayList<>();
+    private List<PartidaEventoResponseDTO> eventos = new ArrayList<>();
 
     public Long getCampeonatoPartidaId() {
         return campeonatoPartidaId;
@@ -37,6 +47,14 @@ public class CampeonatoPartidaResponseDTO {
 
     public void setCampeonatoPartidaId(Long campeonatoPartidaId) {
         this.campeonatoPartidaId = campeonatoPartidaId;
+    }
+
+    public Long getCampeonatoId() {
+        return campeonatoId;
+    }
+
+    public void setCampeonatoId(Long campeonatoId) {
+        this.campeonatoId = campeonatoId;
     }
 
     public Integer getOrdem() {
@@ -95,14 +113,6 @@ public class CampeonatoPartidaResponseDTO {
         this.clubeMandanteCompetidor = clubeMandanteCompetidor;
     }
 
-    public Boolean getClubeMandanteCampeaoAnterior() {
-        return clubeMandanteCampeaoAnterior;
-    }
-
-    public void setClubeMandanteCampeaoAnterior(Boolean clubeMandanteCampeaoAnterior) {
-        this.clubeMandanteCampeaoAnterior = clubeMandanteCampeaoAnterior;
-    }
-
     public Long getClubeVisitanteId() {
         return clubeVisitanteId;
     }
@@ -143,30 +153,6 @@ public class CampeonatoPartidaResponseDTO {
         this.clubeVisitanteCompetidor = clubeVisitanteCompetidor;
     }
 
-    public Boolean getClubeVisitanteCampeaoAnterior() {
-        return clubeVisitanteCampeaoAnterior;
-    }
-
-    public void setClubeVisitanteCampeaoAnterior(Boolean clubeVisitanteCampeaoAnterior) {
-        this.clubeVisitanteCampeaoAnterior = clubeVisitanteCampeaoAnterior;
-    }
-
-    public Long getClubeVencedorId() {
-        return clubeVencedorId;
-    }
-
-    public void setClubeVencedorId(Long clubeVencedorId) {
-        this.clubeVencedorId = clubeVencedorId;
-    }
-
-    public String getClubeVencedorNome() {
-        return clubeVencedorNome;
-    }
-
-    public void setClubeVencedorNome(String clubeVencedorNome) {
-        this.clubeVencedorNome = clubeVencedorNome;
-    }
-
     public Integer getGolsMandante() {
         return golsMandante;
     }
@@ -205,5 +191,45 @@ public class CampeonatoPartidaResponseDTO {
 
     public void setPenaltisVisitante(Integer penaltisVisitante) {
         this.penaltisVisitante = penaltisVisitante;
+    }
+
+    public Long getClubeVencedorId() {
+        return clubeVencedorId;
+    }
+
+    public void setClubeVencedorId(Long clubeVencedorId) {
+        this.clubeVencedorId = clubeVencedorId;
+    }
+
+    public String getClubeVencedorNome() {
+        return clubeVencedorNome;
+    }
+
+    public void setClubeVencedorNome(String clubeVencedorNome) {
+        this.clubeVencedorNome = clubeVencedorNome;
+    }
+
+    public List<CampeonatoAtletaPartidaDTO> getAtletasMandante() {
+        return atletasMandante;
+    }
+
+    public void setAtletasMandante(List<CampeonatoAtletaPartidaDTO> atletasMandante) {
+        this.atletasMandante = atletasMandante;
+    }
+
+    public List<CampeonatoAtletaPartidaDTO> getAtletasVisitante() {
+        return atletasVisitante;
+    }
+
+    public void setAtletasVisitante(List<CampeonatoAtletaPartidaDTO> atletasVisitante) {
+        this.atletasVisitante = atletasVisitante;
+    }
+
+    public List<PartidaEventoResponseDTO> getEventos() {
+        return eventos;
+    }
+
+    public void setEventos(List<PartidaEventoResponseDTO> eventos) {
+        this.eventos = eventos;
     }
 }

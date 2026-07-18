@@ -59,6 +59,9 @@ public class CampeonatoService {
     @Autowired
     private CampeonatoMotorService campeonatoMotorService;
 
+    @Autowired
+    private CampeonatoPartidaService campeonatoPartidaService;
+
     public List<Campeonato> obterTodos() {
         return campeonatoRepository.findAll();
     }
@@ -91,7 +94,9 @@ public class CampeonatoService {
                 atletasPorClube.merge(clubeId, 1L, Long::sum);
             }
         }
-        return CampeonatoMapper.toDTOCompleto(campeonato, atletas.size(), atletasPorClube);
+        CampeonatoResponseCompletoDTO dto = CampeonatoMapper.toDTOCompleto(campeonato, atletas.size(), atletasPorClube);
+        dto.setEstatisticas(campeonatoPartidaService.obterEstatisticas(id));
+        return dto;
     }
 
     public ClubesPorRankResponseDTO obterClubesPorRank() {
