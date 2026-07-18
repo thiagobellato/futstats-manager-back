@@ -2,8 +2,11 @@ package br.com.bellato.gerenciador_fifa.model;
 
 import java.util.List;
 
+import br.com.bellato.gerenciador_fifa.enums.ClubRank;
+import br.com.bellato.gerenciador_fifa.enums.ClubRank.ClubRankConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +31,10 @@ public class Clube {
 
     @Column(name = "clubePais")
     private String pais;
+
+    @Column(name = "clubeRank")
+    @Convert(converter = ClubRankConverter.class)
+    private ClubRank rank;
 
     @OneToMany(mappedBy = "clube", cascade = CascadeType.ALL)
     private List<Atleta> atletas;
@@ -72,6 +79,14 @@ public class Clube {
 
     public void setPais(String pais) {
         this.pais = pais;
+    }
+
+    public ClubRank getRank() {
+        return rank;
+    }
+
+    public void setRank(ClubRank rank) {
+        this.rank = rank;
     }
 
     @Override

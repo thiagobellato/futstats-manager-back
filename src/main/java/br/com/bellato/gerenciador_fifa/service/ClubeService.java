@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
+import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.mapper.clube.ClubeMapper;
 import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
@@ -19,6 +20,9 @@ import jakarta.persistence.EntityNotFoundException;
 public class ClubeService {
     @Autowired
     private ClubeRepository clubeRepository;
+
+    @Autowired
+    private ClubeRankService clubeRankService;
 
     public List<Clube> obterTodos() {
 
@@ -44,6 +48,7 @@ public class ClubeService {
 
         Clube clube = ClubeMapper.toEntity(dto);
         Clube salvo = clubeRepository.save(clube);
+        clubeRankService.atribuirRankSeNecessario(salvo);
 
         return ClubeMapper.toDTO(salvo);
     }
@@ -53,7 +58,8 @@ public class ClubeService {
                 .map(ClubeMapper::toEntity) // Converte cada DTO para entidade
                 .collect(Collectors.toList());
 
-        List<Clube> salvos = clubeRepository.saveAll(clubes); // Salva todos de uma vez
+        List<Clube> salvos = clubeRepository.saveAll(clubes);
+        clubeRankService.atribuirRanksSeNecessario(salvos);
 
         return salvos.stream()
                 .map(ClubeMapper::toDTO) // Converte os salvos para response DTOs
@@ -82,6 +88,9 @@ public class ClubeService {
         }
         if (dadosAtualizados.getSigla() != null && !dadosAtualizados.getSigla().isBlank()) {
             clubeExistente.setSigla(dadosAtualizados.getSigla());
+        }
+        if (dadosAtualizados.getRank() != null) {
+            clubeExistente.setRank(dadosAtualizados.getRank());
         }
 
         Clube clubeAtualizado = clubeRepository.save(clubeExistente);

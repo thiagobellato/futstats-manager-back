@@ -1,0 +1,54 @@
+### Listar campeonatos
+GET http://localhost:8080/api/campeonato
+
+### Buscar campeonato por ID
+GET http://localhost:8080/api/campeonato/1
+
+### Clubes agrupados por rank
+GET http://localhost:8080/api/campeonato/clubes-por-rank
+
+### Validar criação
+POST http://localhost:8080/api/campeonato/validar
+Content-Type: application/json
+
+{
+  "nome": "Brasileirão FutStats 2026",
+  "quantidadeClubes": 32,
+  "competidor1Nome": "Competidor Alpha",
+  "competidor2Nome": "Competidor Beta",
+  "possuiCampeaoAnterior": false,
+  "distribuicaoRanks": {
+    "S": 4,
+    "A": 6,
+    "B": 8,
+    "C": 6,
+    "D": 4,
+    "E": 4
+  },
+  "clubesSelecionados": []
+}
+
+### Criar campeonato
+POST http://localhost:8080/api/campeonato/criar
+Content-Type: application/json
+
+{
+  "nome": "Brasileirão FutStats 2026",
+  "quantidadeClubes": 32,
+  "competidor1Nome": "Competidor Alpha",
+  "competidor2Nome": "Competidor Beta",
+  "possuiCampeaoAnterior": false,
+  "distribuicaoRanks": {
+    "S": 4,
+    "A": 6,
+    "B": 8,
+    "C": 6,
+    "D": 4,
+    "E": 4
+  },
+  "clubesSelecionados": []
+}
+
+### Enums
+GET http://localhost:8080/api/enums/ranks
+GET http://localhost:8080/api/enums/status-campeonato

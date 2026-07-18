@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResumoRankResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
 import br.com.bellato.gerenciador_fifa.mapper.clube.ClubeMapper;
 import br.com.bellato.gerenciador_fifa.model.Clube;
+import br.com.bellato.gerenciador_fifa.service.ClubeRankService;
 import br.com.bellato.gerenciador_fifa.service.ClubeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,6 +34,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ClubeController {
     @Autowired
     private ClubeService clubeService;
+
+    @Autowired
+    private ClubeRankService clubeRankService;
 
     @GetMapping
     @Operation(summary = "Método para listar todos os Clubes cadastrados")
@@ -47,6 +52,12 @@ public class ClubeController {
                 .map(ClubeMapper::toDTOCompleto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/resumo-ranks")
+    @Operation(summary = "Resumo da quantidade de clubes por rank")
+    public ResponseEntity<ClubeResumoRankResponseDTO> obterResumoRanks() {
+        return ResponseEntity.ok(clubeRankService.obterResumoRanks());
     }
 
     @GetMapping("/{id}")

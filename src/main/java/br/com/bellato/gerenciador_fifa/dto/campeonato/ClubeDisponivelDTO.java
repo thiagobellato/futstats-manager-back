@@ -1,17 +1,20 @@
-package br.com.bellato.gerenciador_fifa.dto.clube;
+package br.com.bellato.gerenciador_fifa.dto.campeonato;
+
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ClubeResponseCompletoDTO {
+public class ClubeDisponivelDTO {
 
-    public Long clubeId;
-    public String nome;
-    public String sigla;
-    public String pais;
-    public ClubRank rank;
+    private Long clubeId;
+    private String nome;
+    private String sigla;
+    private String pais;
+    private ClubRank rank;
 
     public Long getClubeId() {
         return clubeId;
@@ -52,5 +55,4 @@ public class ClubeResponseCompletoDTO {
     public void setRank(ClubRank rank) {
         this.rank = rank;
     }
-
 }

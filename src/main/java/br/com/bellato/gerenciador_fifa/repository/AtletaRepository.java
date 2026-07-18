@@ -13,4 +13,6 @@ import br.com.bellato.gerenciador_fifa.model.Atleta;
 public interface AtletaRepository extends JpaRepository<Atleta, Long>, JpaSpecificationExecutor<Atleta> {
 
     List<Atleta> findAll(Specification<Atleta> specification);
+
+    List<Atleta> findByClubeClubeId(Long clubeId);
 }

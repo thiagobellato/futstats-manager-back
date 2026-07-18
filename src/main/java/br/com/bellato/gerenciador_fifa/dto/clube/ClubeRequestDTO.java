@@ -2,12 +2,15 @@ package br.com.bellato.gerenciador_fifa.dto.clube;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import br.com.bellato.gerenciador_fifa.enums.ClubRank;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClubeRequestDTO {
 
     private String nome;
     private String sigla;
     private String pais;
+    private ClubRank rank;
 
     public String getNome() {
         return nome;
@@ -31,6 +34,14 @@ public class ClubeRequestDTO {
 
     public void setPais(String pais) {
         this.pais = pais;
+    }
+
+    public ClubRank getRank() {
+        return rank;
+    }
+
+    public void setRank(ClubRank rank) {
+        this.rank = rank;
     }
 
 }

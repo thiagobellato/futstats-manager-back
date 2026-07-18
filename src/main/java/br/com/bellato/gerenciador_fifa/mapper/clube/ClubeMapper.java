@@ -12,6 +12,9 @@ public class ClubeMapper {
         clube.setNome(dto.getNome());
         clube.setSigla(dto.getSigla());
         clube.setPais(dto.getPais());
+        if (dto.getRank() != null) {
+            clube.setRank(dto.getRank());
+        }
         return clube;
     }
 
@@ -29,6 +32,7 @@ public class ClubeMapper {
         dto.setNome(clube.getNome());
         dto.setSigla(clube.getSigla());
         dto.setPais(clube.getPais());
+        dto.setRank(clube.getRank());
 
         return dto;
     }
