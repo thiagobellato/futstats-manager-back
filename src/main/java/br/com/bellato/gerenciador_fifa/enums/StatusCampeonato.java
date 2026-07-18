@@ -9,6 +9,14 @@ import jakarta.persistence.Converter;
 public enum StatusCampeonato {
     EM_CONFIGURACAO("Em Configuração", "EM_CONFIGURACAO"),
     AGUARDANDO_INICIO("Aguardando Início", "AGUARDANDO_INICIO"),
+    PRONTO_PARA_SORTEIO("Pronto para Sorteio", "PRONTO_PARA_SORTEIO"),
+    PRIMEIRA_RODADA("Primeira Rodada", "PRIMEIRA_RODADA"),
+    RODADA_EM_ANDAMENTO("Rodada em Andamento", "RODADA_EM_ANDAMENTO"),
+    RODADA_FINALIZADA("Rodada Finalizada", "RODADA_FINALIZADA"),
+    AGUARDANDO_REMANEJAMENTO("Aguardando Remanejamento", "AGUARDANDO_REMANEJAMENTO"),
+    GERANDO_PROXIMA_RODADA("Gerando Próxima Rodada", "GERANDO_PROXIMA_RODADA"),
+    AGUARDANDO_ESCOLHA_DO_CAMPEAO("Aguardando Definição do Clube Campeão", "AGUARDANDO_ESCOLHA_DO_CAMPEAO"),
+    AGUARDANDO_FINALIZACAO("Aguardando Finalização", "AGUARDANDO_FINALIZACAO"),
     EM_ANDAMENTO("Em Andamento", "EM_ANDAMENTO"),
     FINALIZADO("Finalizado", "FINALIZADO");
 
@@ -45,6 +53,17 @@ public enum StatusCampeonato {
 
     public String getCodigo() {
         return codigo;
+    }
+
+    public boolean isAtivo() {
+        return this != EM_CONFIGURACAO
+                && this != AGUARDANDO_ESCOLHA_DO_CAMPEAO
+                && this != AGUARDANDO_FINALIZACAO
+                && this != FINALIZADO;
+    }
+
+    public boolean possuiCampeaoDefinido() {
+        return this == AGUARDANDO_FINALIZACAO || this == FINALIZADO;
     }
 
     @Converter(autoApply = false)

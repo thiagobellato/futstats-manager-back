@@ -16,6 +16,7 @@ public class CampeonatoClubeResponseDTO {
     private Integer competidorNumero;
     private Boolean campeaoAnterior;
     private Boolean excluidoSorteio;
+    private Boolean eliminado;
     private Long quantidadeAtletas;
 
     public Long getCampeonatoClubeId() {
@@ -88,6 +89,14 @@ public class CampeonatoClubeResponseDTO {
 
     public void setExcluidoSorteio(Boolean excluidoSorteio) {
         this.excluidoSorteio = excluidoSorteio;
+    }
+
+    public Boolean getEliminado() {
+        return eliminado;
+    }
+
+    public void setEliminado(Boolean eliminado) {
+        this.eliminado = eliminado;
     }
 
     public Long getQuantidadeAtletas() {

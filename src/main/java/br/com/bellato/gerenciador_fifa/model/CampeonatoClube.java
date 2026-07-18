@@ -54,6 +54,9 @@ public class CampeonatoClube {
     @Column(name = "campeonatoClubeExcluidoSorteio")
     private Boolean excluidoSorteio;
 
+    @Column(name = "campeonatoClubeEliminado")
+    private Boolean eliminado = Boolean.FALSE;
+
     @OneToMany(mappedBy = "campeonatoClube")
     private List<CampeonatoAtleta> atletas = new ArrayList<>();
 
@@ -138,6 +141,18 @@ public class CampeonatoClube {
 
     public void setExcluidoSorteio(Boolean excluidoSorteio) {
         this.excluidoSorteio = excluidoSorteio;
+    }
+
+    public Boolean getEliminado() {
+        return eliminado;
+    }
+
+    public void setEliminado(Boolean eliminado) {
+        this.eliminado = eliminado;
+    }
+
+    public boolean isClassificado() {
+        return !Boolean.TRUE.equals(eliminado);
     }
 
     public List<CampeonatoAtleta> getAtletas() {

@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoCriarRequestDTO;
@@ -19,6 +20,17 @@ public class CampeonatoValidator {
     private CampeonatoValidator() {
     }
 
+    public static int calcularVagasCampeaoProtegido(Boolean possuiCampeaoAnterior) {
+        return Boolean.TRUE.equals(possuiCampeaoAnterior) ? 1 : 0;
+    }
+
+    public static int calcularVagasParaSelecao(Integer quantidadeClubes, Boolean possuiCampeaoAnterior) {
+        if (quantidadeClubes == null) {
+            return 0;
+        }
+        return quantidadeClubes - calcularVagasCampeaoProtegido(possuiCampeaoAnterior);
+    }
+
     public static void validarCriacao(CampeonatoCriarRequestDTO dto, Map<Long, Clube> clubesPorId) {
         validarCriacao(dto, clubesPorId, null);
     }
@@ -28,7 +40,7 @@ public class CampeonatoValidator {
         validarInformacoesGerais(dto);
         validarCompetidores(dto);
         validarCampeaoAnterior(dto, clubesPorId);
-        validarDistribuicaoRanks(dto, disponibilidadePorRank);
+        validarDistribuicaoRanks(dto, disponibilidadePorRank, clubesPorId);
         validarClubesSelecionados(dto, clubesPorId);
     }
 
@@ -72,15 +84,24 @@ public class CampeonatoValidator {
     }
 
     public static void validarDistribuicaoRanks(CampeonatoCriarRequestDTO dto) {
-        validarDistribuicaoRanks(dto, null);
+        validarDistribuicaoRanks(dto, null, null);
     }
 
     public static void validarDistribuicaoRanks(CampeonatoCriarRequestDTO dto,
             Map<ClubRank, Long> disponibilidadePorRank) {
+        validarDistribuicaoRanks(dto, disponibilidadePorRank, null);
+    }
+
+    public static void validarDistribuicaoRanks(CampeonatoCriarRequestDTO dto,
+            Map<ClubRank, Long> disponibilidadePorRank, Map<Long, Clube> clubesPorId) {
         Map<ClubRank, Integer> distribuicao = dto.getDistribuicaoRanks();
         if (distribuicao == null || distribuicao.isEmpty()) {
             throw new CampeonatoBusinessException("A distribuição de ranks é obrigatória.");
         }
+
+        int vagasParaSelecao = calcularVagasParaSelecao(dto.getQuantidadeClubes(), dto.getPossuiCampeaoAnterior());
+        Map<ClubRank, Long> disponibilidadeEfetiva = ajustarDisponibilidadeExcluindoCampeao(
+                disponibilidadePorRank, dto, clubesPorId);
 
         int soma = 0;
         for (ClubRank rank : ClubRank.values()) {
@@ -90,19 +111,26 @@ public class CampeonatoValidator {
             }
             soma += quantidade;
 
-            if (disponibilidadePorRank != null) {
-                long disponivel = disponibilidadePorRank.getOrDefault(rank, 0L);
+            if (disponibilidadeEfetiva != null) {
+                long disponivel = disponibilidadeEfetiva.getOrDefault(rank, 0L);
                 if (quantidade > disponivel) {
                     throw new CampeonatoBusinessException(
-                            "Existem apenas " + disponivel + " clubes disponíveis no Rank " + rank.getSigla() + ".");
+                            "Existem apenas " + disponivel + " clubes disponíveis no Rank " + rank.getSigla()
+                                    + " para seleção"
+                                    + (Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior())
+                                            ? " (desconsiderando o campeão protegido)."
+                                            : "."));
                 }
             }
         }
 
-        if (soma != dto.getQuantidadeClubes()) {
+        if (soma != vagasParaSelecao) {
+            String detalheCampeao = Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior())
+                    ? " O campeão protegido já ocupa 1 vaga, restando " + vagasParaSelecao + " para distribuição."
+                    : "";
             throw new CampeonatoBusinessException(
-                    "A soma dos ranks (" + soma + ") deve ser igual à quantidade de clubes ("
-                            + dto.getQuantidadeClubes() + ").");
+                    "A soma dos ranks (" + soma + ") deve ser igual às vagas para seleção ("
+                            + vagasParaSelecao + ")." + detalheCampeao);
         }
     }
 
@@ -114,7 +142,7 @@ public class CampeonatoValidator {
 
         if (selecionados.size() != dto.getQuantidadeClubes()) {
             throw new CampeonatoBusinessException(
-                    "A quantidade de clubes selecionados deve ser " + dto.getQuantidadeClubes() + ".");
+                    "A quantidade total de clubes participantes deve ser " + dto.getQuantidadeClubes() + ".");
         }
 
         Map<ClubRank, Integer> contagemPorRank = new EnumMap<>(ClubRank.class);
@@ -124,6 +152,9 @@ public class CampeonatoValidator {
 
         Set<Long> idsUnicos = new HashSet<>();
         boolean campeaoIncluido = false;
+        Long campeaoId = Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior())
+                ? dto.getCampeaoAnteriorClubeId()
+                : null;
 
         for (ClubeSelecionadoDTO selecionado : selecionados) {
             if (selecionado.getClubeId() == null || selecionado.getRank() == null) {
@@ -135,11 +166,12 @@ public class CampeonatoValidator {
             if (!clubesPorId.containsKey(selecionado.getClubeId())) {
                 throw new CampeonatoBusinessException("Clube com ID " + selecionado.getClubeId() + " não encontrado.");
             }
-            contagemPorRank.merge(selecionado.getRank(), 1, Integer::sum);
 
-            if (Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior())
-                    && selecionado.getClubeId().equals(dto.getCampeaoAnteriorClubeId())) {
+            boolean ehCampeao = campeaoId != null && Objects.equals(selecionado.getClubeId(), campeaoId);
+            if (ehCampeao) {
                 campeaoIncluido = true;
+            } else {
+                contagemPorRank.merge(selecionado.getRank(), 1, Integer::sum);
             }
         }
 
@@ -149,12 +181,37 @@ public class CampeonatoValidator {
             if (selecionado != esperado) {
                 throw new CampeonatoBusinessException(
                         "O rank " + rank.getSigla() + " deve ter exatamente " + esperado
-                                + " clubes, mas foram selecionados " + selecionado + ".");
+                                + " clubes selecionados (além do campeão protegido, se houver), mas foram selecionados "
+                                + selecionado + ".");
             }
         }
 
         if (Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior()) && !campeaoIncluido) {
             throw new CampeonatoBusinessException("O clube campeão anterior deve estar entre os clubes selecionados.");
         }
+    }
+
+    public static Map<ClubRank, Long> ajustarDisponibilidadeExcluindoCampeao(
+            Map<ClubRank, Long> disponibilidadePorRank,
+            CampeonatoCriarRequestDTO dto,
+            Map<Long, Clube> clubesPorId) {
+        if (disponibilidadePorRank == null) {
+            return null;
+        }
+
+        Map<ClubRank, Long> ajustada = new EnumMap<>(ClubRank.class);
+        ajustada.putAll(disponibilidadePorRank);
+
+        if (!Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior()) || dto.getCampeaoAnteriorClubeId() == null
+                || clubesPorId == null) {
+            return ajustada;
+        }
+
+        Clube campeao = clubesPorId.get(dto.getCampeaoAnteriorClubeId());
+        if (campeao != null && campeao.getRank() != null) {
+            long atual = ajustada.getOrDefault(campeao.getRank(), 0L);
+            ajustada.put(campeao.getRank(), Math.max(0L, atual - 1));
+        }
+        return ajustada;
     }
 }

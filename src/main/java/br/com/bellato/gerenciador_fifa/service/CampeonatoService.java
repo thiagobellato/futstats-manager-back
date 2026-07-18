@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoComposicaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoCriarRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseDTO;
@@ -54,6 +56,9 @@ public class CampeonatoService {
     @Autowired
     private AtletaRepository atletaRepository;
 
+    @Autowired
+    private CampeonatoMotorService campeonatoMotorService;
+
     public List<Campeonato> obterTodos() {
         return campeonatoRepository.findAll();
     }
@@ -67,6 +72,16 @@ public class CampeonatoService {
     @Transactional(readOnly = true)
     public CampeonatoResponseCompletoDTO obterCompletoPorId(Long id) {
         Campeonato campeonato = obterPorId(id);
+        if (campeonato.getRodadas() != null) {
+            campeonato.getRodadas().forEach(rodada -> {
+                if (rodada.getPartidas() != null) {
+                    rodada.getPartidas().size();
+                }
+            });
+        }
+        if (campeonato.getCampeaoClube() != null) {
+            campeonato.getCampeaoClube().getNome();
+        }
         List<br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta> atletas =
                 campeonatoAtletaRepository.findByCampeonatoCampeonatoId(id);
         Map<Long, Long> atletasPorClube = new HashMap<>();
@@ -80,6 +95,10 @@ public class CampeonatoService {
     }
 
     public ClubesPorRankResponseDTO obterClubesPorRank() {
+        return obterClubesPorRank(null);
+    }
+
+    public ClubesPorRankResponseDTO obterClubesPorRank(Long campeaoAnteriorClubeId) {
         List<Clube> clubes = clubeRepository.findAll();
 
         Map<ClubRank, List<br.com.bellato.gerenciador_fifa.dto.campeonato.ClubeDisponivelDTO>> agrupado =
@@ -92,11 +111,47 @@ public class CampeonatoService {
             if (clube.getRank() == null) {
                 continue;
             }
-            agrupado.get(clube.getRank()).add(CampeonatoMapper.toClubeDisponivel(clube));
+            boolean protegido = campeaoAnteriorClubeId != null
+                    && Long.valueOf(clube.getClubeId()).equals(campeaoAnteriorClubeId);
+            agrupado.get(clube.getRank()).add(CampeonatoMapper.toClubeDisponivel(clube, protegido));
         }
 
         ClubesPorRankResponseDTO response = new ClubesPorRankResponseDTO();
         response.setClubesPorRank(agrupado);
+        return response;
+    }
+
+    public CampeonatoComposicaoResponseDTO obterComposicao(Integer quantidadeClubes, Boolean possuiCampeaoAnterior,
+            Long campeaoAnteriorClubeId) {
+        if (quantidadeClubes == null || !Set.of(16, 32, 64).contains(quantidadeClubes)) {
+            throw new CampeonatoBusinessException("A quantidade de clubes deve ser 16, 32 ou 64.");
+        }
+
+        boolean protegido = Boolean.TRUE.equals(possuiCampeaoAnterior);
+        int vagasProtegido = CampeonatoValidator.calcularVagasCampeaoProtegido(protegido);
+        int vagasSelecao = CampeonatoValidator.calcularVagasParaSelecao(quantidadeClubes, protegido);
+
+        Map<ClubRank, Long> quantidadePorRank = new EnumMap<>(ClubRank.class);
+        quantidadePorRank.putAll(clubeRankService.obterQuantidadePorRank());
+
+        if (protegido && campeaoAnteriorClubeId != null) {
+            clubeRepository.findById(campeaoAnteriorClubeId).ifPresent(campeao -> {
+                if (campeao.getRank() != null) {
+                    long atual = quantidadePorRank.getOrDefault(campeao.getRank(), 0L);
+                    quantidadePorRank.put(campeao.getRank(), Math.max(0L, atual - 1));
+                }
+            });
+        }
+
+        long totalDisponivel = quantidadePorRank.values().stream().mapToLong(Long::longValue).sum();
+
+        CampeonatoComposicaoResponseDTO response = new CampeonatoComposicaoResponseDTO();
+        response.setQuantidadeParticipantes(quantidadeClubes);
+        response.setPossuiCampeaoProtegido(protegido);
+        response.setVagasCampeaoProtegido(vagasProtegido);
+        response.setVagasParaSelecao(vagasSelecao);
+        response.setQuantidadePorRankParaSelecao(quantidadePorRank);
+        response.setTotalClubesDisponiveisParaSelecao(totalDisponivel);
         return response;
     }
 
@@ -162,6 +217,7 @@ public class CampeonatoService {
         }
 
         Campeonato salvo = campeonatoRepository.save(campeonato);
+        campeonatoMotorService.iniciarCampeonato(salvo);
         return CampeonatoMapper.toDTO(salvo);
     }
 

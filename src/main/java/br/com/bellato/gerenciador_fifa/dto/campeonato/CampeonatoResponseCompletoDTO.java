@@ -26,6 +26,15 @@ public class CampeonatoResponseCompletoDTO {
     private Map<ClubRank, Integer> distribuicaoRanks;
     private List<CampeonatoClubeResponseDTO> clubes;
     private Long quantidadeAtletas;
+    private Integer rodadaAtual;
+    private Integer campeaoCompetidor;
+    private Long campeaoClubeId;
+    private String campeaoClubeNome;
+    private Integer clubesClassificadosCompetidor1;
+    private Integer clubesClassificadosCompetidor2;
+    private List<CampeonatoRodadaResponseDTO> rodadas;
+    private Boolean remanejamentoNecessario;
+    private Boolean escolhaCampeaoNecessaria;
 
     public Long getCampeonatoId() {
         return campeonatoId;
@@ -137,5 +146,77 @@ public class CampeonatoResponseCompletoDTO {
 
     public void setQuantidadeAtletas(Long quantidadeAtletas) {
         this.quantidadeAtletas = quantidadeAtletas;
+    }
+
+    public Integer getRodadaAtual() {
+        return rodadaAtual;
+    }
+
+    public void setRodadaAtual(Integer rodadaAtual) {
+        this.rodadaAtual = rodadaAtual;
+    }
+
+    public Integer getCampeaoCompetidor() {
+        return campeaoCompetidor;
+    }
+
+    public void setCampeaoCompetidor(Integer campeaoCompetidor) {
+        this.campeaoCompetidor = campeaoCompetidor;
+    }
+
+    public Long getCampeaoClubeId() {
+        return campeaoClubeId;
+    }
+
+    public void setCampeaoClubeId(Long campeaoClubeId) {
+        this.campeaoClubeId = campeaoClubeId;
+    }
+
+    public String getCampeaoClubeNome() {
+        return campeaoClubeNome;
+    }
+
+    public void setCampeaoClubeNome(String campeaoClubeNome) {
+        this.campeaoClubeNome = campeaoClubeNome;
+    }
+
+    public Integer getClubesClassificadosCompetidor1() {
+        return clubesClassificadosCompetidor1;
+    }
+
+    public void setClubesClassificadosCompetidor1(Integer clubesClassificadosCompetidor1) {
+        this.clubesClassificadosCompetidor1 = clubesClassificadosCompetidor1;
+    }
+
+    public Integer getClubesClassificadosCompetidor2() {
+        return clubesClassificadosCompetidor2;
+    }
+
+    public void setClubesClassificadosCompetidor2(Integer clubesClassificadosCompetidor2) {
+        this.clubesClassificadosCompetidor2 = clubesClassificadosCompetidor2;
+    }
+
+    public List<CampeonatoRodadaResponseDTO> getRodadas() {
+        return rodadas;
+    }
+
+    public void setRodadas(List<CampeonatoRodadaResponseDTO> rodadas) {
+        this.rodadas = rodadas;
+    }
+
+    public Boolean getRemanejamentoNecessario() {
+        return remanejamentoNecessario;
+    }
+
+    public void setRemanejamentoNecessario(Boolean remanejamentoNecessario) {
+        this.remanejamentoNecessario = remanejamentoNecessario;
+    }
+
+    public Boolean getEscolhaCampeaoNecessaria() {
+        return escolhaCampeaoNecessaria;
+    }
+
+    public void setEscolhaCampeaoNecessaria(Boolean escolhaCampeaoNecessaria) {
+        this.escolhaCampeaoNecessaria = escolhaCampeaoNecessaria;
     }
 }

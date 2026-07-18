@@ -13,6 +13,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -52,6 +54,16 @@ public class Campeonato {
 
     @Column(name = "campeonatoDataCriacao")
     private LocalDateTime dataCriacao;
+
+    @Column(name = "campeonatoRodadaAtual")
+    private Integer rodadaAtual;
+
+    @Column(name = "campeonatoCampeaoCompetidor")
+    private Integer campeaoCompetidor;
+
+    @ManyToOne
+    @JoinColumn(name = "campeonato_campeao_clube_id")
+    private CampeonatoClube campeaoClube;
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CampeonatoDistribuicaoRank> distribuicaoRanks = new ArrayList<>();
@@ -146,6 +158,30 @@ public class Campeonato {
 
     public void setDataCriacao(LocalDateTime dataCriacao) {
         this.dataCriacao = dataCriacao;
+    }
+
+    public Integer getRodadaAtual() {
+        return rodadaAtual;
+    }
+
+    public void setRodadaAtual(Integer rodadaAtual) {
+        this.rodadaAtual = rodadaAtual;
+    }
+
+    public Integer getCampeaoCompetidor() {
+        return campeaoCompetidor;
+    }
+
+    public void setCampeaoCompetidor(Integer campeaoCompetidor) {
+        this.campeaoCompetidor = campeaoCompetidor;
+    }
+
+    public CampeonatoClube getCampeaoClube() {
+        return campeaoClube;
+    }
+
+    public void setCampeaoClube(CampeonatoClube campeaoClube) {
+        this.campeaoClube = campeaoClube;
     }
 
     public List<CampeonatoDistribuicaoRank> getDistribuicaoRanks() {

@@ -15,6 +15,8 @@ public class ClubeDisponivelDTO {
     private String sigla;
     private String pais;
     private ClubRank rank;
+    private Boolean protegido;
+    private Boolean elegivelParaPote;
 
     public Long getClubeId() {
         return clubeId;
@@ -54,5 +56,21 @@ public class ClubeDisponivelDTO {
 
     public void setRank(ClubRank rank) {
         this.rank = rank;
+    }
+
+    public Boolean getProtegido() {
+        return protegido;
+    }
+
+    public void setProtegido(Boolean protegido) {
+        this.protegido = protegido;
+    }
+
+    public Boolean getElegivelParaPote() {
+        return elegivelParaPote;
+    }
+
+    public void setElegivelParaPote(Boolean elegivelParaPote) {
+        this.elegivelParaPote = elegivelParaPote;
     }
 }

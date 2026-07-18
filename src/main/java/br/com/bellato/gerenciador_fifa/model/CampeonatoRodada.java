@@ -3,8 +3,11 @@ package br.com.bellato.gerenciador_fifa.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import br.com.bellato.gerenciador_fifa.enums.StatusRodada;
+import br.com.bellato.gerenciador_fifa.enums.StatusRodada.StatusRodadaConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,6 +35,16 @@ public class CampeonatoRodada {
 
     @Column(name = "campeonatoRodadaNome")
     private String nome;
+
+    @Column(name = "campeonatoRodadaStatus")
+    @Convert(converter = StatusRodadaConverter.class)
+    private StatusRodada status;
+
+    @Column(name = "campeonatoRodadaFaseAssincrona")
+    private Boolean faseAssincrona = Boolean.FALSE;
+
+    @Column(name = "campeonatoRodadaCompetidorRemanejamento")
+    private Integer competidorRemanejamento;
 
     @OneToMany(mappedBy = "campeonatoRodada", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CampeonatoPartida> partidas = new ArrayList<>();
@@ -69,6 +82,30 @@ public class CampeonatoRodada {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public StatusRodada getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusRodada status) {
+        this.status = status;
+    }
+
+    public Boolean getFaseAssincrona() {
+        return faseAssincrona;
+    }
+
+    public void setFaseAssincrona(Boolean faseAssincrona) {
+        this.faseAssincrona = faseAssincrona;
+    }
+
+    public Integer getCompetidorRemanejamento() {
+        return competidorRemanejamento;
+    }
+
+    public void setCompetidorRemanejamento(Integer competidorRemanejamento) {
+        this.competidorRemanejamento = competidorRemanejamento;
     }
 
     public List<CampeonatoPartida> getPartidas() {
