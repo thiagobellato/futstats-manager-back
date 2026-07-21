@@ -10,6 +10,7 @@ import br.com.bellato.gerenciador_fifa.exception.CampeonatoBusinessException;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoPartida;
+import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
 
 public final class PartidaRegistroValidator {
 
@@ -25,6 +26,29 @@ public final class PartidaRegistroValidator {
         }
         if (request.getGolsMandante() < 0 || request.getGolsVisitante() < 0) {
             throw new CampeonatoBusinessException("O placar não pode conter valores negativos.");
+        }
+    }
+
+    /**
+     * Atletas suspensos por expulsão não podem participar de eventos da partida.
+     */
+    public static void validarAtletasSuspensos(
+            List<CampeonatoAtleta> atletasResolvidos,
+            java.util.Set<String> identidadesSuspensas) {
+
+        if (identidadesSuspensas == null || identidadesSuspensas.isEmpty()) {
+            return;
+        }
+        for (CampeonatoAtleta atleta : atletasResolvidos) {
+            if (atleta == null) {
+                continue;
+            }
+            String identidade = CampeonatoAtletaIdentidade.garantir(atleta);
+            if (identidadesSuspensas.contains(identidade)) {
+                throw new CampeonatoBusinessException(
+                        "O atleta " + nomeAtleta(atleta)
+                                + " está suspenso por expulsão e não pode ser utilizado nesta partida.");
+            }
         }
     }
 

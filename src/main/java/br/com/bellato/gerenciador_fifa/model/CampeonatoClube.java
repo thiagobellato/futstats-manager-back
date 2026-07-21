@@ -60,6 +60,18 @@ public class CampeonatoClube {
     @Column(name = "campeonatoClubeJogos")
     private Integer jogos = 0;
 
+    @Column(name = "campeonatoClubePontos")
+    private Integer pontos = 0;
+
+    @Column(name = "campeonatoClubeVitorias")
+    private Integer vitorias = 0;
+
+    @Column(name = "campeonatoClubeEmpates")
+    private Integer empates = 0;
+
+    @Column(name = "campeonatoClubeDerrotas")
+    private Integer derrotas = 0;
+
     @Column(name = "campeonatoClubeGolsPro")
     private Integer golsPro = 0;
 
@@ -166,6 +178,38 @@ public class CampeonatoClube {
 
     public void setJogos(Integer jogos) {
         this.jogos = jogos;
+    }
+
+    public Integer getPontos() {
+        return pontos;
+    }
+
+    public void setPontos(Integer pontos) {
+        this.pontos = pontos;
+    }
+
+    public Integer getVitorias() {
+        return vitorias;
+    }
+
+    public void setVitorias(Integer vitorias) {
+        this.vitorias = vitorias;
+    }
+
+    public Integer getEmpates() {
+        return empates;
+    }
+
+    public void setEmpates(Integer empates) {
+        this.empates = empates;
+    }
+
+    public Integer getDerrotas() {
+        return derrotas;
+    }
+
+    public void setDerrotas(Integer derrotas) {
+        this.derrotas = derrotas;
     }
 
     public Integer getGolsPro() {

@@ -11,6 +11,10 @@ public class ClassificacaoClubeDTO {
     private Integer competidorNumero;
     private Boolean eliminado;
     private Integer jogos;
+    private Integer pontos;
+    private Integer vitorias;
+    private Integer empates;
+    private Integer derrotas;
     private Integer golsPro;
     private Integer golsContra;
     private Integer saldoGols;
@@ -61,6 +65,38 @@ public class ClassificacaoClubeDTO {
 
     public void setJogos(Integer jogos) {
         this.jogos = jogos;
+    }
+
+    public Integer getPontos() {
+        return pontos;
+    }
+
+    public void setPontos(Integer pontos) {
+        this.pontos = pontos;
+    }
+
+    public Integer getVitorias() {
+        return vitorias;
+    }
+
+    public void setVitorias(Integer vitorias) {
+        this.vitorias = vitorias;
+    }
+
+    public Integer getEmpates() {
+        return empates;
+    }
+
+    public void setEmpates(Integer empates) {
+        this.empates = empates;
+    }
+
+    public Integer getDerrotas() {
+        return derrotas;
+    }
+
+    public void setDerrotas(Integer derrotas) {
+        this.derrotas = derrotas;
     }
 
     public Integer getGolsPro() {

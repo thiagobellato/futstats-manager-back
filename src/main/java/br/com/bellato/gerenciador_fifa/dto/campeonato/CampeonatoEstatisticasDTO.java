@@ -13,6 +13,7 @@ public class CampeonatoEstatisticasDTO {
     private List<RankingAtletaCampeonatoDTO> assistencias = new ArrayList<>();
     private List<RankingAtletaCampeonatoDTO> cartoesAmarelos = new ArrayList<>();
     private List<RankingAtletaCampeonatoDTO> cartoesVermelhos = new ArrayList<>();
+    private CampeonatoDashboardDTO dashboard;
 
     public List<ClassificacaoClubeDTO> getClassificacao() {
         return classificacao;
@@ -52,5 +53,13 @@ public class CampeonatoEstatisticasDTO {
 
     public void setCartoesVermelhos(List<RankingAtletaCampeonatoDTO> cartoesVermelhos) {
         this.cartoesVermelhos = cartoesVermelhos;
+    }
+
+    public CampeonatoDashboardDTO getDashboard() {
+        return dashboard;
+    }
+
+    public void setDashboard(CampeonatoDashboardDTO dashboard) {
+        this.dashboard = dashboard;
     }
 }

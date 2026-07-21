@@ -3,9 +3,11 @@ package br.com.bellato.gerenciador_fifa.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoAtletaPartidaDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoDashboardDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.ClassificacaoClubeDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.DefinirVencedorRequestDTO;
@@ -51,6 +54,9 @@ public class CampeonatoPartidaService {
     @Autowired
     private CampeonatoMotorService campeonatoMotorService;
 
+    @Autowired
+    private CampeonatoSuspensaoService campeonatoSuspensaoService;
+
     @Transactional(readOnly = true)
     public PartidaDetalheResponseDTO obterDetalhe(Long campeonatoId, Long partidaId) {
         CampeonatoPartida partida = obterPartidaDoCampeonato(campeonatoId, partidaId);
@@ -72,6 +78,8 @@ public class CampeonatoPartidaService {
                 : request.getEventos();
 
         List<CampeonatoAtleta> atletasResolvidos = resolverAtletas(campeonatoId, eventosRequest);
+        Set<String> suspensos = campeonatoSuspensaoService.identidadesSuspensasAtivas(campeonatoId);
+        PartidaRegistroValidator.validarAtletasSuspensos(atletasResolvidos, suspensos);
         PartidaRegistroValidator.validarEventosContraPlacar(partida, request, atletasResolvidos);
         CampeonatoClube vencedor = PartidaRegistroValidator.determinarVencedor(partida, request);
 
@@ -111,6 +119,7 @@ public class CampeonatoPartidaService {
             atleta.setAssistencias(0);
             atleta.setCartoesAmarelos(0);
             atleta.setCartoesVermelhos(0);
+            CampeonatoAtletaIdentidade.garantir(atleta);
         }
 
         Map<Long, CampeonatoAtleta> atletasPorId = atletas.stream()
@@ -120,6 +129,10 @@ public class CampeonatoPartidaService {
         if (campeonato.getClubes() != null) {
             for (CampeonatoClube clube : campeonato.getClubes()) {
                 clube.setJogos(0);
+                clube.setPontos(0);
+                clube.setVitorias(0);
+                clube.setEmpates(0);
+                clube.setDerrotas(0);
                 clube.setGolsPro(0);
                 clube.setGolsContra(0);
                 clubesPorId.put(clube.getCampeonatoClubeId(), clube);
@@ -146,6 +159,7 @@ public class CampeonatoPartidaService {
 
         campeonatoAtletaRepository.saveAll(atletas);
         campeonatoRepository.save(campeonato);
+        campeonatoSuspensaoService.recalcularSuspensoes(campeonato, atletas);
     }
 
     @Transactional(readOnly = true)
@@ -160,11 +174,7 @@ public class CampeonatoPartidaService {
         if (campeonato.getClubes() != null) {
             dto.setClassificacao(campeonato.getClubes().stream()
                     .map(this::toClassificacaoDTO)
-                    .sorted(Comparator
-                            .comparing((ClassificacaoClubeDTO c) -> Boolean.TRUE.equals(c.getEliminado()))
-                            .thenComparing(ClassificacaoClubeDTO::getSaldoGols, Comparator.reverseOrder())
-                            .thenComparing(ClassificacaoClubeDTO::getGolsPro, Comparator.reverseOrder())
-                            .thenComparing(ClassificacaoClubeDTO::getNome, Comparator.nullsLast(String::compareToIgnoreCase)))
+                    .sorted(comparadorClassificacao())
                     .collect(Collectors.toList()));
         }
 
@@ -174,31 +184,173 @@ public class CampeonatoPartidaService {
                 .filter(a -> valor(a.getGols()) > 0)
                 .sorted(Comparator
                         .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getGols()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(this::nomeRanking, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
         dto.setAssistencias(rankingsAgregados.stream()
                 .filter(a -> valor(a.getAssistencias()) > 0)
                 .sorted(Comparator
                         .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getAssistencias()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(this::nomeRanking, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
         dto.setCartoesAmarelos(rankingsAgregados.stream()
                 .filter(a -> valor(a.getCartoesAmarelos()) > 0)
                 .sorted(Comparator
                         .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getCartoesAmarelos()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(this::nomeRanking, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
         dto.setCartoesVermelhos(rankingsAgregados.stream()
                 .filter(a -> valor(a.getCartoesVermelhos()) > 0)
                 .sorted(Comparator
                         .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getCartoesVermelhos()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(this::nomeRanking, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
+        dto.setDashboard(montarDashboard(campeonato, atletas, dto));
         return dto;
+    }
+
+    private CampeonatoDashboardDTO montarDashboard(
+            Campeonato campeonato,
+            List<CampeonatoAtleta> atletas,
+            CampeonatoEstatisticasDTO stats) {
+
+        CampeonatoDashboardDTO dash = new CampeonatoDashboardDTO();
+
+        if (campeonato.getCampeaoClube() != null) {
+            dash.setCampeaoClubeId(campeonato.getCampeaoClube().getCampeonatoClubeId());
+            dash.setCampeaoNome(campeonato.getCampeaoClube().getNome());
+            resolverVice(campeonato).ifPresent(vice -> {
+                dash.setViceClubeId(vice.getCampeonatoClubeId());
+                dash.setViceNome(vice.getNome());
+            });
+        }
+
+        if (!stats.getArtilharia().isEmpty()) {
+            dash.setArtilheiro(stats.getArtilharia().get(0));
+        }
+        if (!stats.getAssistencias().isEmpty()) {
+            dash.setLiderAssistencias(stats.getAssistencias().get(0));
+        }
+        if (!stats.getCartoesAmarelos().isEmpty()) {
+            dash.setMaisCartoesAmarelos(stats.getCartoesAmarelos().get(0));
+        }
+        if (!stats.getCartoesVermelhos().isEmpty()) {
+            dash.setMaisCartoesVermelhos(stats.getCartoesVermelhos().get(0));
+        }
+
+        List<ClassificacaoClubeDTO> clubesComJogos = stats.getClassificacao().stream()
+                .filter(c -> valor(c.getJogos()) > 0)
+                .collect(Collectors.toList());
+
+        clubesComJogos.stream()
+                .max(Comparator.comparingInt(c -> valor(c.getGolsPro())))
+                .ifPresent(dash::setMelhorAtaque);
+        clubesComJogos.stream()
+                .min(Comparator.comparingInt(c -> valor(c.getGolsContra())))
+                .ifPresent(dash::setMelhorDefesa);
+        clubesComJogos.stream()
+                .max(Comparator.comparingInt(c -> valor(c.getSaldoGols())))
+                .ifPresent(dash::setMaiorSaldo);
+
+        int partidasFinalizadas = 0;
+        int totalGols = 0;
+        if (campeonato.getRodadas() != null) {
+            for (CampeonatoRodada rodada : campeonato.getRodadas()) {
+                if (rodada.getPartidas() == null) {
+                    continue;
+                }
+                for (CampeonatoPartida partida : rodada.getPartidas()) {
+                    if (partida.getStatus() != StatusPartida.FINALIZADA) {
+                        continue;
+                    }
+                    partidasFinalizadas++;
+                    totalGols += valor(partida.getGolsMandante()) + valor(partida.getGolsVisitante());
+                }
+            }
+        }
+
+        int totalCartoes = atletas.stream()
+                .mapToInt(a -> valor(a.getCartoesAmarelos()) + valor(a.getCartoesVermelhos()))
+                .sum();
+
+        Set<String> identidadesCriadas = new HashSet<>();
+        int transferencias = 0;
+        for (CampeonatoAtleta atleta : atletas) {
+            if (atleta.getDataFim() != null) {
+                transferencias++;
+            }
+            if (atleta.getAtletaOrigemId() == null) {
+                identidadesCriadas.add(CampeonatoAtletaIdentidade.garantir(atleta));
+            }
+        }
+
+        dash.setQuantidadePartidas(partidasFinalizadas);
+        dash.setQuantidadeGols(totalGols);
+        dash.setMediaGols(partidasFinalizadas == 0 ? 0.0
+                : Math.round((totalGols * 100.0) / partidasFinalizadas) / 100.0);
+        dash.setQuantidadeCartoes(totalCartoes);
+        dash.setQuantidadeTransferencias(transferencias);
+        dash.setQuantidadeAtletasCriados(identidadesCriadas.size());
+        return dash;
+    }
+
+    private java.util.Optional<CampeonatoClube> resolverVice(Campeonato campeonato) {
+        if (campeonato.getCampeaoClube() == null || campeonato.getRodadas() == null) {
+            return java.util.Optional.empty();
+        }
+        Long campeaoId = campeonato.getCampeaoClube().getCampeonatoClubeId();
+
+        CampeonatoPartida finalDoCampeonato = campeonato.getRodadas().stream()
+                .filter(r -> r.getNome() != null && r.getNome().equalsIgnoreCase("Final"))
+                .flatMap(r -> r.getPartidas() == null ? java.util.stream.Stream.empty() : r.getPartidas().stream())
+                .filter(p -> p.getStatus() == StatusPartida.FINALIZADA)
+                .findFirst()
+                .orElse(null);
+
+        if (finalDoCampeonato == null) {
+            finalDoCampeonato = campeonato.getRodadas().stream()
+                    .max(Comparator.comparing(r -> r.getNumeroRodada() == null ? 0 : r.getNumeroRodada()))
+                    .flatMap(r -> r.getPartidas() == null ? java.util.Optional.empty()
+                            : r.getPartidas().stream()
+                                    .filter(p -> p.getStatus() == StatusPartida.FINALIZADA)
+                                    .filter(p -> envolveClube(p, campeaoId))
+                                    .findFirst())
+                    .orElse(null);
+        }
+
+        if (finalDoCampeonato == null) {
+            return java.util.Optional.empty();
+        }
+        CampeonatoClube mandante = finalDoCampeonato.getClubeMandante();
+        CampeonatoClube visitante = finalDoCampeonato.getClubeVisitante();
+        if (mandante != null && !Objects.equals(mandante.getCampeonatoClubeId(), campeaoId)) {
+            return java.util.Optional.of(mandante);
+        }
+        if (visitante != null && !Objects.equals(visitante.getCampeonatoClubeId(), campeaoId)) {
+            return java.util.Optional.of(visitante);
+        }
+        return java.util.Optional.empty();
+    }
+
+    private boolean envolveClube(CampeonatoPartida partida, Long clubeId) {
+        return (partida.getClubeMandante() != null
+                && Objects.equals(partida.getClubeMandante().getCampeonatoClubeId(), clubeId))
+                || (partida.getClubeVisitante() != null
+                        && Objects.equals(partida.getClubeVisitante().getCampeonatoClubeId(), clubeId));
+    }
+
+    private Comparator<ClassificacaoClubeDTO> comparadorClassificacao() {
+        return Comparator
+                .comparing((ClassificacaoClubeDTO c) -> Boolean.TRUE.equals(c.getEliminado()))
+                .thenComparing(c -> valor(c.getPontos()), Comparator.reverseOrder())
+                .thenComparing(c -> valor(c.getSaldoGols()), Comparator.reverseOrder())
+                .thenComparing(c -> valor(c.getGolsPro()), Comparator.reverseOrder())
+                .thenComparing(c -> valor(c.getVitorias()), Comparator.reverseOrder())
+                .thenComparing(c -> valor(c.getDerrotas()))
+                .thenComparing(ClassificacaoClubeDTO::getNome, Comparator.nullsLast(String::compareToIgnoreCase));
     }
 
     private List<RankingAtletaCampeonatoDTO> agregarRankingsPorIdentidade(List<CampeonatoAtleta> atletas) {
@@ -252,6 +404,10 @@ public class CampeonatoPartidaService {
         return dto.getNome() + " " + dto.getSobrenome();
     }
 
+    /**
+     * Aplica placar na classificação. Pênaltis não alteram pontos, gols nem saldo.
+     * Bônus: diferença de 3–4 gols (+1) ou 5+ (+2).
+     */
     private void aplicarPlacarNaClassificacao(CampeonatoPartida partida, Map<Long, CampeonatoClube> clubesPorId) {
         if (partida.getGolsMandante() == null || partida.getGolsVisitante() == null) {
             return;
@@ -262,13 +418,43 @@ public class CampeonatoPartidaService {
             return;
         }
 
+        int golsM = partida.getGolsMandante();
+        int golsV = partida.getGolsVisitante();
+
         mandante.setJogos(valor(mandante.getJogos()) + 1);
         visitante.setJogos(valor(visitante.getJogos()) + 1);
 
-        mandante.setGolsPro(valor(mandante.getGolsPro()) + partida.getGolsMandante());
-        mandante.setGolsContra(valor(mandante.getGolsContra()) + partida.getGolsVisitante());
-        visitante.setGolsPro(valor(visitante.getGolsPro()) + partida.getGolsVisitante());
-        visitante.setGolsContra(valor(visitante.getGolsContra()) + partida.getGolsMandante());
+        mandante.setGolsPro(valor(mandante.getGolsPro()) + golsM);
+        mandante.setGolsContra(valor(mandante.getGolsContra()) + golsV);
+        visitante.setGolsPro(valor(visitante.getGolsPro()) + golsV);
+        visitante.setGolsContra(valor(visitante.getGolsContra()) + golsM);
+
+        if (golsM > golsV) {
+            int bonus = calcularBonus(golsM - golsV);
+            mandante.setVitorias(valor(mandante.getVitorias()) + 1);
+            mandante.setPontos(valor(mandante.getPontos()) + 3 + bonus);
+            visitante.setDerrotas(valor(visitante.getDerrotas()) + 1);
+        } else if (golsV > golsM) {
+            int bonus = calcularBonus(golsV - golsM);
+            visitante.setVitorias(valor(visitante.getVitorias()) + 1);
+            visitante.setPontos(valor(visitante.getPontos()) + 3 + bonus);
+            mandante.setDerrotas(valor(mandante.getDerrotas()) + 1);
+        } else {
+            mandante.setEmpates(valor(mandante.getEmpates()) + 1);
+            visitante.setEmpates(valor(visitante.getEmpates()) + 1);
+            mandante.setPontos(valor(mandante.getPontos()) + 1);
+            visitante.setPontos(valor(visitante.getPontos()) + 1);
+        }
+    }
+
+    static int calcularBonus(int diferencaGols) {
+        if (diferencaGols >= 5) {
+            return 2;
+        }
+        if (diferencaGols >= 3) {
+            return 1;
+        }
+        return 0;
     }
 
     private void aplicarEventosNasEstatisticas(CampeonatoPartida partida, Map<Long, CampeonatoAtleta> atletasPorId) {
@@ -293,7 +479,6 @@ public class CampeonatoPartidaService {
             } else if (tipo == TipoEventoPartida.CARTAO_VERMELHO) {
                 atleta.setCartoesVermelhos(valor(atleta.getCartoesVermelhos()) + 1);
             }
-            // GOL_CONTRA não entra na artilharia
         }
     }
 
@@ -397,18 +582,22 @@ public class CampeonatoPartidaService {
                 ? List.of()
                 : campeonatoAtletaRepository.findByCampeonatoClubeCampeonatoClubeIdInAndAtivoTrue(clubeIds);
 
+        Set<String> suspensos = partida.getStatus() == StatusPartida.FINALIZADA
+                ? Set.of()
+                : campeonatoSuspensaoService.identidadesSuspensasAtivas(campeonatoId);
+
         dto.setAtletasMandante(atletas.stream()
                 .filter(a -> mandante != null
                         && Objects.equals(a.getCampeonatoClube().getCampeonatoClubeId(), mandante.getCampeonatoClubeId()))
                 .sorted(Comparator.comparing(this::nomeCompleto, String.CASE_INSENSITIVE_ORDER))
-                .map(this::toAtletaPartidaDTO)
+                .map(a -> toAtletaPartidaDTO(a, suspensos))
                 .collect(Collectors.toList()));
 
         dto.setAtletasVisitante(atletas.stream()
                 .filter(a -> visitante != null
                         && Objects.equals(a.getCampeonatoClube().getCampeonatoClubeId(), visitante.getCampeonatoClubeId()))
                 .sorted(Comparator.comparing(this::nomeCompleto, String.CASE_INSENSITIVE_ORDER))
-                .map(this::toAtletaPartidaDTO)
+                .map(a -> toAtletaPartidaDTO(a, suspensos))
                 .collect(Collectors.toList()));
 
         if (partida.getEventos() != null) {
@@ -421,13 +610,19 @@ public class CampeonatoPartidaService {
         return dto;
     }
 
-    private CampeonatoAtletaPartidaDTO toAtletaPartidaDTO(CampeonatoAtleta atleta) {
+    private CampeonatoAtletaPartidaDTO toAtletaPartidaDTO(CampeonatoAtleta atleta, Set<String> suspensos) {
         CampeonatoAtletaPartidaDTO dto = new CampeonatoAtletaPartidaDTO();
         dto.setCampeonatoAtletaId(atleta.getCampeonatoAtletaId());
         dto.setCampeonatoClubeId(atleta.getCampeonatoClube().getCampeonatoClubeId());
         dto.setNome(atleta.getNome());
         dto.setSobrenome(atleta.getSobrenome());
         dto.setPosicao(atleta.getPosicao());
+        String identidade = CampeonatoAtletaIdentidade.garantir(atleta);
+        boolean suspenso = suspensos.contains(identidade);
+        dto.setSuspenso(suspenso);
+        if (suspenso) {
+            dto.setMotivoSuspensao(CampeonatoSuspensaoService.MOTIVO_EXPULSAO);
+        }
         return dto;
     }
 
@@ -456,25 +651,13 @@ public class CampeonatoPartidaService {
         dto.setCompetidorNumero(clube.getCompetidorNumero());
         dto.setEliminado(clube.getEliminado());
         dto.setJogos(valor(clube.getJogos()));
+        dto.setPontos(valor(clube.getPontos()));
+        dto.setVitorias(valor(clube.getVitorias()));
+        dto.setEmpates(valor(clube.getEmpates()));
+        dto.setDerrotas(valor(clube.getDerrotas()));
         dto.setGolsPro(valor(clube.getGolsPro()));
         dto.setGolsContra(valor(clube.getGolsContra()));
         dto.setSaldoGols(clube.getSaldoGols());
-        return dto;
-    }
-
-    private RankingAtletaCampeonatoDTO toRankingDTO(CampeonatoAtleta atleta) {
-        RankingAtletaCampeonatoDTO dto = new RankingAtletaCampeonatoDTO();
-        dto.setCampeonatoAtletaId(atleta.getCampeonatoAtletaId());
-        dto.setNome(atleta.getNome());
-        dto.setSobrenome(atleta.getSobrenome());
-        dto.setGols(valor(atleta.getGols()));
-        dto.setAssistencias(valor(atleta.getAssistencias()));
-        dto.setCartoesAmarelos(valor(atleta.getCartoesAmarelos()));
-        dto.setCartoesVermelhos(valor(atleta.getCartoesVermelhos()));
-        if (atleta.getCampeonatoClube() != null) {
-            dto.setCampeonatoClubeId(atleta.getCampeonatoClube().getCampeonatoClubeId());
-            dto.setClubeNome(atleta.getCampeonatoClube().getNome());
-        }
         return dto;
     }
 

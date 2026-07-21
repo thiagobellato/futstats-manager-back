@@ -12,6 +12,8 @@ public class CampeonatoAtletaPartidaDTO {
     private String nome;
     private String sobrenome;
     private PosicaoFutebol posicao;
+    private Boolean suspenso;
+    private String motivoSuspensao;
 
     public Long getCampeonatoAtletaId() {
         return campeonatoAtletaId;
@@ -51,5 +53,21 @@ public class CampeonatoAtletaPartidaDTO {
 
     public void setPosicao(PosicaoFutebol posicao) {
         this.posicao = posicao;
+    }
+
+    public Boolean getSuspenso() {
+        return suspenso;
+    }
+
+    public void setSuspenso(Boolean suspenso) {
+        this.suspenso = suspenso;
+    }
+
+    public String getMotivoSuspensao() {
+        return motivoSuspensao;
+    }
+
+    public void setMotivoSuspensao(String motivoSuspensao) {
+        this.motivoSuspensao = motivoSuspensao;
     }
 }

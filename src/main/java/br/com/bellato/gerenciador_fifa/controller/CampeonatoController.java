@@ -17,6 +17,7 @@ import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoAtletaElencoDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoAtualizarAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoComposicaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoCriarRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoDashboardDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoNovoAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseCompletoDTO;
@@ -145,9 +146,15 @@ public class CampeonatoController {
     }
 
     @GetMapping("/{id}/estatisticas")
-    @Operation(summary = "Obter estatísticas do campeonato (classificação, artilharia, assistências e cartões)")
+    @Operation(summary = "Obter estatísticas do campeonato (classificação, rankings e dashboard)")
     public ResponseEntity<CampeonatoEstatisticasDTO> obterEstatisticas(@PathVariable Long id) {
         return ResponseEntity.ok(campeonatoPartidaService.obterEstatisticas(id));
+    }
+
+    @GetMapping("/{id}/dashboard")
+    @Operation(summary = "Obter dashboard inteligente do campeonato")
+    public ResponseEntity<CampeonatoDashboardDTO> obterDashboard(@PathVariable Long id) {
+        return ResponseEntity.ok(campeonatoPartidaService.obterEstatisticas(id).getDashboard());
     }
 
     @GetMapping("/{id}/elenco")
