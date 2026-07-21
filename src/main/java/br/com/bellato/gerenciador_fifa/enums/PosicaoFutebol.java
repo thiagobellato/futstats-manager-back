@@ -45,8 +45,15 @@ public enum PosicaoFutebol {
 
     @JsonCreator
     public static PosicaoFutebol fromJson(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String trimmed = value.trim();
         for (PosicaoFutebol posicao : values()) {
-            if (posicao.siglaPosicao.equalsIgnoreCase(value) || posicao.descricaoPosicao.equalsIgnoreCase(value)) {
+            if (posicao.name().equalsIgnoreCase(trimmed)
+                    || posicao.siglaPosicao.equalsIgnoreCase(trimmed)
+                    || posicao.descricaoPosicao.equalsIgnoreCase(trimmed)
+                    || posicao.getDatabaseValue().equalsIgnoreCase(trimmed)) {
                 return posicao;
             }
         }

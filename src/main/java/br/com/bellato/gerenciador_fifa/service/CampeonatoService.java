@@ -35,6 +35,7 @@ import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoAtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
+import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
 import br.com.bellato.gerenciador_fifa.validator.CampeonatoValidator;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -88,13 +89,18 @@ public class CampeonatoService {
         List<br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta> atletas =
                 campeonatoAtletaRepository.findByCampeonatoCampeonatoId(id);
         Map<Long, Long> atletasPorClube = new HashMap<>();
+        long atletasAtivos = 0;
         for (br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta atleta : atletas) {
+            if (!atleta.isAtivo()) {
+                continue;
+            }
+            atletasAtivos++;
             if (atleta.getCampeonatoClube() != null) {
                 Long clubeId = atleta.getCampeonatoClube().getCampeonatoClubeId();
                 atletasPorClube.merge(clubeId, 1L, Long::sum);
             }
         }
-        CampeonatoResponseCompletoDTO dto = CampeonatoMapper.toDTOCompleto(campeonato, atletas.size(), atletasPorClube);
+        CampeonatoResponseCompletoDTO dto = CampeonatoMapper.toDTOCompleto(campeonato, atletasAtivos, atletasPorClube);
         dto.setEstatisticas(campeonatoPartidaService.obterEstatisticas(id));
         return dto;
     }
@@ -254,11 +260,14 @@ public class CampeonatoService {
         snapshot.setCampeonato(campeonato);
         snapshot.setCampeonatoClube(snapshotClube);
         snapshot.setAtletaOrigemId(atleta.getAtletaId());
+        snapshot.setIdentidade(CampeonatoAtletaIdentidade.paraAtletaGlobal(atleta.getAtletaId()));
         snapshot.setNome(atleta.getNome());
         snapshot.setSobrenome(atleta.getSobrenome());
         snapshot.setDataDeNascimento(atleta.getDataDeNascimento());
         snapshot.setNacionalidade(atleta.getNacionalidade());
         snapshot.setPosicao(atleta.getPosicao());
+        snapshot.setAtivo(true);
+        snapshot.setDataInicio(java.time.LocalDate.now());
         return snapshot;
     }
 

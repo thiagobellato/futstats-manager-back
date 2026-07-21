@@ -33,6 +33,7 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoRodada;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoAtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoPartidaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoRepository;
+import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
 import br.com.bellato.gerenciador_fifa.validator.PartidaRegistroValidator;
 
 @Service
@@ -153,6 +154,7 @@ public class CampeonatoPartidaService {
                 .orElseThrow(() -> new CampeonatoBusinessException("Campeonato não encontrado."));
 
         List<CampeonatoAtleta> atletas = campeonatoAtletaRepository.findByCampeonatoCampeonatoId(campeonatoId);
+        atletas.forEach(CampeonatoAtletaIdentidade::garantir);
         CampeonatoEstatisticasDTO dto = new CampeonatoEstatisticasDTO();
 
         if (campeonato.getClubes() != null) {
@@ -166,39 +168,88 @@ public class CampeonatoPartidaService {
                     .collect(Collectors.toList()));
         }
 
-        dto.setArtilharia(atletas.stream()
+        List<RankingAtletaCampeonatoDTO> rankingsAgregados = agregarRankingsPorIdentidade(atletas);
+
+        dto.setArtilharia(rankingsAgregados.stream()
                 .filter(a -> valor(a.getGols()) > 0)
                 .sorted(Comparator
-                        .comparing((CampeonatoAtleta a) -> valor(a.getGols()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeCompleto(a), String.CASE_INSENSITIVE_ORDER))
-                .map(this::toRankingDTO)
+                        .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getGols()), Comparator.reverseOrder())
+                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
-        dto.setAssistencias(atletas.stream()
+        dto.setAssistencias(rankingsAgregados.stream()
                 .filter(a -> valor(a.getAssistencias()) > 0)
                 .sorted(Comparator
-                        .comparing((CampeonatoAtleta a) -> valor(a.getAssistencias()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeCompleto(a), String.CASE_INSENSITIVE_ORDER))
-                .map(this::toRankingDTO)
+                        .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getAssistencias()), Comparator.reverseOrder())
+                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
-        dto.setCartoesAmarelos(atletas.stream()
+        dto.setCartoesAmarelos(rankingsAgregados.stream()
                 .filter(a -> valor(a.getCartoesAmarelos()) > 0)
                 .sorted(Comparator
-                        .comparing((CampeonatoAtleta a) -> valor(a.getCartoesAmarelos()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeCompleto(a), String.CASE_INSENSITIVE_ORDER))
-                .map(this::toRankingDTO)
+                        .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getCartoesAmarelos()), Comparator.reverseOrder())
+                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
-        dto.setCartoesVermelhos(atletas.stream()
+        dto.setCartoesVermelhos(rankingsAgregados.stream()
                 .filter(a -> valor(a.getCartoesVermelhos()) > 0)
                 .sorted(Comparator
-                        .comparing((CampeonatoAtleta a) -> valor(a.getCartoesVermelhos()), Comparator.reverseOrder())
-                        .thenComparing(a -> nomeCompleto(a), String.CASE_INSENSITIVE_ORDER))
-                .map(this::toRankingDTO)
+                        .comparing((RankingAtletaCampeonatoDTO a) -> valor(a.getCartoesVermelhos()), Comparator.reverseOrder())
+                        .thenComparing(a -> nomeRanking(a), String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList()));
 
         return dto;
+    }
+
+    private List<RankingAtletaCampeonatoDTO> agregarRankingsPorIdentidade(List<CampeonatoAtleta> atletas) {
+        Map<String, List<CampeonatoAtleta>> porIdentidade = new HashMap<>();
+        for (CampeonatoAtleta atleta : atletas) {
+            String identidade = CampeonatoAtletaIdentidade.garantir(atleta);
+            porIdentidade.computeIfAbsent(identidade, k -> new ArrayList<>()).add(atleta);
+        }
+
+        List<RankingAtletaCampeonatoDTO> resultado = new ArrayList<>();
+        for (Map.Entry<String, List<CampeonatoAtleta>> entry : porIdentidade.entrySet()) {
+            List<CampeonatoAtleta> vinculos = entry.getValue();
+            CampeonatoAtleta ativo = vinculos.stream()
+                    .filter(CampeonatoAtleta::isAtivo)
+                    .findFirst()
+                    .orElse(vinculos.get(0));
+
+            RankingAtletaCampeonatoDTO dto = new RankingAtletaCampeonatoDTO();
+            dto.setIdentidade(entry.getKey());
+            dto.setCampeonatoAtletaId(ativo.getCampeonatoAtletaId());
+            dto.setNome(ativo.getNome());
+            dto.setSobrenome(ativo.getSobrenome());
+            if (ativo.getCampeonatoClube() != null) {
+                dto.setCampeonatoClubeId(ativo.getCampeonatoClube().getCampeonatoClubeId());
+                dto.setClubeNome(ativo.getCampeonatoClube().getNome());
+            }
+
+            int gols = 0;
+            int assists = 0;
+            int amarelos = 0;
+            int vermelhos = 0;
+            for (CampeonatoAtleta v : vinculos) {
+                gols += valor(v.getGols());
+                assists += valor(v.getAssistencias());
+                amarelos += valor(v.getCartoesAmarelos());
+                vermelhos += valor(v.getCartoesVermelhos());
+            }
+            dto.setGols(gols);
+            dto.setAssistencias(assists);
+            dto.setCartoesAmarelos(amarelos);
+            dto.setCartoesVermelhos(vermelhos);
+            resultado.add(dto);
+        }
+        return resultado;
+    }
+
+    private String nomeRanking(RankingAtletaCampeonatoDTO dto) {
+        if (dto.getSobrenome() == null || dto.getSobrenome().isBlank()) {
+            return dto.getNome() == null ? "" : dto.getNome();
+        }
+        return dto.getNome() + " " + dto.getSobrenome();
     }
 
     private void aplicarPlacarNaClassificacao(CampeonatoPartida partida, Map<Long, CampeonatoClube> clubesPorId) {
@@ -344,7 +395,7 @@ public class CampeonatoPartidaService {
 
         List<CampeonatoAtleta> atletas = clubeIds.isEmpty()
                 ? List.of()
-                : campeonatoAtletaRepository.findByCampeonatoClubeCampeonatoClubeIdIn(clubeIds);
+                : campeonatoAtletaRepository.findByCampeonatoClubeCampeonatoClubeIdInAndAtivoTrue(clubeIds);
 
         dto.setAtletasMandante(atletas.stream()
                 .filter(a -> mandante != null

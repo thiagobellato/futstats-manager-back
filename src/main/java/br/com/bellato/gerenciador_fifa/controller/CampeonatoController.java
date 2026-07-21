@@ -8,15 +8,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoAtletaElencoDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoAtualizarAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoComposicaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoCriarRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoNovoAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoTransferirAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoValidacaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.ClubesPorRankResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.DefinirVencedorRequestDTO;
@@ -25,6 +30,7 @@ import br.com.bellato.gerenciador_fifa.dto.campeonato.RegistrarPartidaRequestDTO
 import br.com.bellato.gerenciador_fifa.dto.campeonato.RemanejamentoInfoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.RemanejamentoRequestDTO;
 import br.com.bellato.gerenciador_fifa.mapper.campeonato.CampeonatoMapper;
+import br.com.bellato.gerenciador_fifa.service.CampeonatoMercadoService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoMotorService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoPartidaService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoService;
@@ -46,6 +52,9 @@ public class CampeonatoController {
 
     @Autowired
     private CampeonatoPartidaService campeonatoPartidaService;
+
+    @Autowired
+    private CampeonatoMercadoService campeonatoMercadoService;
 
     @GetMapping
     @Operation(summary = "Listar todos os campeonatos cadastrados")
@@ -139,6 +148,38 @@ public class CampeonatoController {
     @Operation(summary = "Obter estatísticas do campeonato (classificação, artilharia, assistências e cartões)")
     public ResponseEntity<CampeonatoEstatisticasDTO> obterEstatisticas(@PathVariable Long id) {
         return ResponseEntity.ok(campeonatoPartidaService.obterEstatisticas(id));
+    }
+
+    @GetMapping("/{id}/elenco")
+    @Operation(summary = "Listar elenco do campeonato com histórico por clube")
+    public ResponseEntity<List<CampeonatoAtletaElencoDTO>> listarElenco(@PathVariable Long id) {
+        return ResponseEntity.ok(campeonatoMercadoService.listarElenco(id));
+    }
+
+    @PostMapping("/{id}/atletas")
+    @Operation(summary = "Criar novo atleta apenas no snapshot do campeonato")
+    public ResponseEntity<CampeonatoAtletaElencoDTO> criarAtleta(
+            @PathVariable Long id,
+            @RequestBody CampeonatoNovoAtletaRequestDTO request) {
+        return ResponseEntity.status(201).body(campeonatoMercadoService.criarNovoAtleta(id, request));
+    }
+
+    @PutMapping("/{id}/atletas/{campeonatoAtletaId}")
+    @Operation(summary = "Editar dados do atleta apenas no snapshot do campeonato (sem alterar banco global)")
+    public ResponseEntity<CampeonatoAtletaElencoDTO> atualizarAtleta(
+            @PathVariable Long id,
+            @PathVariable Long campeonatoAtletaId,
+            @RequestBody CampeonatoAtualizarAtletaRequestDTO request) {
+        return ResponseEntity.ok(campeonatoMercadoService.atualizarAtleta(id, campeonatoAtletaId, request));
+    }
+
+    @PostMapping("/{id}/atletas/transferir")
+    @Operation(summary = "Transferir/importar atleta apenas dentro do campeonato (sem alterar banco global)")
+    public ResponseEntity<CampeonatoResponseCompletoDTO> transferirAtleta(
+            @PathVariable Long id,
+            @RequestBody CampeonatoTransferirAtletaRequestDTO request) {
+        campeonatoMercadoService.transferirAtleta(id, request);
+        return ResponseEntity.ok(campeonatoService.obterCompletoPorId(id));
     }
 
     @GetMapping("/{id}/remanejamento")

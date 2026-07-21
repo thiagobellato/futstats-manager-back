@@ -3,14 +3,12 @@ package br.com.bellato.gerenciador_fifa.dto.campeonato;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RankingAtletaCampeonatoDTO {
+public class CampeonatoAtletaHistoricoClubeDTO {
 
     private Long campeonatoAtletaId;
-    private String identidade;
-    private String nome;
-    private String sobrenome;
     private Long campeonatoClubeId;
     private String clubeNome;
+    private Boolean ativo;
     private Integer gols;
     private Integer assistencias;
     private Integer cartoesAmarelos;
@@ -22,30 +20,6 @@ public class RankingAtletaCampeonatoDTO {
 
     public void setCampeonatoAtletaId(Long campeonatoAtletaId) {
         this.campeonatoAtletaId = campeonatoAtletaId;
-    }
-
-    public String getIdentidade() {
-        return identidade;
-    }
-
-    public void setIdentidade(String identidade) {
-        this.identidade = identidade;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getSobrenome() {
-        return sobrenome;
-    }
-
-    public void setSobrenome(String sobrenome) {
-        this.sobrenome = sobrenome;
     }
 
     public Long getCampeonatoClubeId() {
@@ -62,6 +36,14 @@ public class RankingAtletaCampeonatoDTO {
 
     public void setClubeNome(String clubeNome) {
         this.clubeNome = clubeNome;
+    }
+
+    public Boolean getAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(Boolean ativo) {
+        this.ativo = ativo;
     }
 
     public Integer getGols() {

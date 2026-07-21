@@ -31,8 +31,11 @@ public class CampeonatoAtleta {
     @JoinColumn(name = "campeonato_clube_id", nullable = false)
     private CampeonatoClube campeonatoClube;
 
-    @Column(name = "campeonatoAtletaOrigemId", nullable = false)
+    @Column(name = "campeonatoAtletaOrigemId", nullable = true)
     private Long atletaOrigemId;
+
+    @Column(name = "campeonatoAtletaIdentidade", length = 64)
+    private String identidade;
 
     @Column(name = "campeonatoAtletaNome", nullable = false)
     private String nome;
@@ -61,6 +64,15 @@ public class CampeonatoAtleta {
 
     @Column(name = "campeonatoAtletaCartoesVermelhos")
     private Integer cartoesVermelhos = 0;
+
+    @Column(name = "campeonatoAtletaAtivo")
+    private Boolean ativo = Boolean.TRUE;
+
+    @Column(name = "campeonatoAtletaDataInicio")
+    private LocalDate dataInicio;
+
+    @Column(name = "campeonatoAtletaDataFim")
+    private LocalDate dataFim;
 
     public CampeonatoAtleta() {
     }
@@ -167,5 +179,41 @@ public class CampeonatoAtleta {
 
     public void setCartoesVermelhos(Integer cartoesVermelhos) {
         this.cartoesVermelhos = cartoesVermelhos;
+    }
+
+    public String getIdentidade() {
+        return identidade;
+    }
+
+    public void setIdentidade(String identidade) {
+        this.identidade = identidade;
+    }
+
+    public Boolean getAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(Boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    public boolean isAtivo() {
+        return !Boolean.FALSE.equals(ativo) && dataFim == null;
+    }
+
+    public LocalDate getDataInicio() {
+        return dataInicio;
+    }
+
+    public void setDataInicio(LocalDate dataInicio) {
+        this.dataInicio = dataInicio;
+    }
+
+    public LocalDate getDataFim() {
+        return dataFim;
+    }
+
+    public void setDataFim(LocalDate dataFim) {
+        this.dataFim = dataFim;
     }
 }
