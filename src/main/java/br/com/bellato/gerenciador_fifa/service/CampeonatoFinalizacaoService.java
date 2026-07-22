@@ -170,7 +170,7 @@ public class CampeonatoFinalizacaoService {
         Map<Long, Integer> posicoes = calcularPosicoesFinais(
                 campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, totalRodadas);
         Map<Long, RankEvolucaoResultado> evolucoes = calcularEvolucoesRanks(
-                campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, posicoes, totalRodadas);
+                campeonato, campeaoSnapshot, posicoes);
 
         int ranksAlterados = sincronizarClubesERanks(
                 campeonato, clubesGlobais, campeaoSnapshot, evolucoes, fasePorClube, posicoes);
@@ -246,32 +246,30 @@ public class CampeonatoFinalizacaoService {
         Map<Long, Integer> fasePorClube = calcularFaseAlcancada(campeonato);
         Map<Long, Integer> posicoes = calcularPosicoesFinais(
                 campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, totalRodadas);
-        return calcularEvolucoesRanks(campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, posicoes, totalRodadas);
+        return calcularEvolucoesRanks(campeonato, campeaoSnapshot, posicoes);
     }
 
     private Map<Long, RankEvolucaoResultado> calcularEvolucoesRanks(
             Campeonato campeonato,
             CampeonatoClube campeaoSnapshot,
-            CampeonatoClube viceSnapshot,
-            Map<Long, Integer> fasePorClube,
-            Map<Long, Integer> posicoes,
-            int totalRodadas) {
+            Map<Long, Integer> posicoes) {
 
         Map<Long, RankEvolucaoResultado> mapa = new LinkedHashMap<>();
         if (campeonato.getClubes() == null) {
             return mapa;
         }
+        int totalClubes = campeonato.getQuantidadeClubes() != null && campeonato.getQuantidadeClubes() > 0
+                ? campeonato.getQuantidadeClubes()
+                : campeonato.getClubes().size();
+
         for (CampeonatoClube snap : campeonato.getClubes()) {
             ClubRank rankBase = snap.getRank() != null ? snap.getRank() : ClubRank.E;
             boolean campeao = Objects.equals(snap.getCampeonatoClubeId(), campeaoSnapshot.getCampeonatoClubeId());
-            boolean vice = viceSnapshot != null
-                    && Objects.equals(snap.getCampeonatoClubeId(), viceSnapshot.getCampeonatoClubeId());
             boolean protegido = Boolean.TRUE.equals(snap.getCampeaoAnterior());
-            int posicao = posicoes.getOrDefault(snap.getCampeonatoClubeId(), campeonato.getQuantidadeClubes());
-            int fase = fasePorClube.getOrDefault(snap.getCampeonatoClubeId(), 0);
+            int posicao = posicoes.getOrDefault(snap.getCampeonatoClubeId(), totalClubes);
 
             ClubRank rankNovo = RankEvolutionPolicy.calcularNovoRank(
-                    snap, posicao, fase, totalRodadas, campeao, vice, protegido);
+                    snap, posicao, totalClubes, campeao, protegido);
             mapa.put(snap.getCampeonatoClubeId(),
                     new RankEvolucaoResultado(snap.getCampeonatoClubeId(), rankBase, rankNovo));
         }

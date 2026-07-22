@@ -6,105 +6,125 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
 /**
  * Política de evolução de ranks ao finalizar campeonatos (16 / 32 / 64 clubes).
  * <p>
- * A posição usada é a da classificação estatística (pontos, saldo, etc.),
- * independente de quem foi campeão do mata-mata.
- * O campeão recebe um bônus de +1 promoção após a regra normal.
- * Campeão protegido nunca rebaixa neste campeonato.
+ * Ordem obrigatória:
+ * <ol>
+ *   <li>identifica faixa pela posição percentual na classificação;</li>
+ *   <li>aplica evolução da classificação (±1 ou permanece);</li>
+ *   <li>aplica regra especial do Rank S;</li>
+ *   <li>restringe acesso ao Rank S (somente quem iniciou como A);</li>
+ *   <li>aplica bônus do campeão (+1);</li>
+ *   <li>protege o campeão vigente (nunca rebaixa).</li>
+ * </ol>
  */
 public final class RankEvolutionPolicy {
-
-    private static final int MAX_MOVIMENTO = 3;
 
     private RankEvolutionPolicy() {
     }
 
+    /**
+     * Calcula o novo rank após a finalização do campeonato.
+     *
+     * @param snapshot     clube no campeonato (rank inicial)
+     * @param posicaoFinal posição na classificação (1 = primeiro)
+     * @param totalClubes  quantidade de clubes do campeonato (16 / 32 / 64)
+     * @param campeao      se foi campeão do mata-mata
+     * @param protegido    se é o campeão vigente (protegido de rebaixamento)
+     */
     public static ClubRank calcularNovoRank(
             CampeonatoClube snapshot,
             int posicaoFinal,
-            int faseAlcancada,
-            int totalRodadas,
+            int totalClubes,
             boolean campeao,
-            boolean vice,
             boolean protegido) {
 
-        ClubRank atual = snapshot.getRank() != null ? snapshot.getRank() : ClubRank.E;
-        int delta;
+        ClubRank rankInicial = snapshot.getRank() != null ? snapshot.getRank() : ClubRank.E;
+        int total = Math.max(1, totalClubes);
+        int posicao = Math.max(1, Math.min(posicaoFinal, total));
+        Faixa faixa = identificarFaixa(posicao, total);
 
-        if (vice && !campeao) {
-            delta = -Math.min(2, MAX_MOVIMENTO);
-        } else {
-            // Campeão e demais: evolução pela classificação / desempenho
-            delta = deltaPorDesempenho(atual, faseAlcancada, totalRodadas, posicaoFinal);
+        // Etapa 2 — Evolução pela classificação
+        ClubRank resultado = evoluirPorFaixa(rankInicial, faixa);
+
+        // Etapa 3 — Regra especial do Rank S
+        if (rankInicial == ClubRank.S) {
+            resultado = aplicarRegraEspecialRankS(faixa);
         }
 
-        if (protegido && delta > 0) {
-            delta = 0;
-        }
+        // Etapa 4 — Restrição para chegar ao Rank S
+        resultado = restringirAcessoRankS(rankInicial, resultado);
 
-        delta = Math.max(-MAX_MOVIMENTO, Math.min(MAX_MOVIMENTO, delta));
-
-        ClubRank resultado;
-        if (delta < 0) {
-            resultado = atual.promover(-delta);
-        } else if (delta > 0) {
-            resultado = atual.rebaixar(delta);
-        } else {
-            resultado = atual;
-        }
-
-        // Bônus do título: +1 nível após a regra normal (S permanece S)
+        // Etapa 5 — Bônus do campeão
         if (campeao) {
             resultado = resultado.promover(1);
+            resultado = restringirAcessoRankS(rankInicial, resultado);
+        }
+
+        // Etapa 6 — Proteção do campeão vigente
+        if (protegido && resultado.getNivel() > rankInicial.getNivel()) {
+            resultado = rankInicial;
         }
 
         return resultado;
     }
 
     /**
-     * delta negativo = promoção; positivo = rebaixamento.
+     * Faixas por percentual (sem posições fixas):
+     * <ul>
+     *   <li>Faixa 1 — Top 25%</li>
+     *   <li>Faixa 2 — Top 50% (após a Faixa 1)</li>
+     *   <li>Faixa 3 — intermediária (até o início do rebaixamento)</li>
+     *   <li>Faixa 4 — últimos 25%</li>
+     * </ul>
      */
-    private static int deltaPorDesempenho(ClubRank atual, int faseAlcancada, int totalRodadas, int posicaoFinal) {
-        int rodadas = Math.max(1, totalRodadas);
-        double performance = Math.min(1.0, (double) Math.max(0, faseAlcancada) / rodadas);
-        double esperado = desempenhoEsperado(atual);
-        double diff = performance - esperado;
+    static Faixa identificarFaixa(int posicao, int totalClubes) {
+        int limiteFaixa1 = totalClubes / 4;
+        int limiteFaixa2 = totalClubes / 2;
+        int inicioFaixa4 = totalClubes - (totalClubes / 4) + 1;
 
-        // Ajuste fino pela posição relativa na classificação (pior colocação pressiona rebaixamento)
-        if (posicaoFinal > rodadas * 4) {
-            diff -= 0.15;
+        if (posicao <= limiteFaixa1) {
+            return Faixa.TOP_25;
         }
-
-        if (atual == ClubRank.S) {
-            // S só perde após campanha claramente ruim (saída precoce)
-            if (faseAlcancada <= 1 && diff < -0.35) {
-                return 1;
-            }
-            return 0;
+        if (posicao <= limiteFaixa2) {
+            return Faixa.TOP_50;
         }
-
-        if (diff >= 0.35) {
-            return -2;
+        if (posicao < inicioFaixa4) {
+            return Faixa.INTERMEDIARIA;
         }
-        if (diff >= 0.18) {
-            return -1;
-        }
-        if (diff <= -0.45) {
-            return 2;
-        }
-        if (diff <= -0.22) {
-            return 1;
-        }
-        return 0;
+        return Faixa.REBAIXAMENTO;
     }
 
-    private static double desempenhoEsperado(ClubRank rank) {
-        return switch (rank) {
-            case S -> 0.85;
-            case A -> 0.70;
-            case B -> 0.55;
-            case C -> 0.40;
-            case D -> 0.25;
-            case E -> 0.15;
+    private static ClubRank evoluirPorFaixa(ClubRank rankInicial, Faixa faixa) {
+        return switch (faixa) {
+            case TOP_25 -> rankInicial.promover(1);
+            case TOP_50, INTERMEDIARIA -> rankInicial;
+            case REBAIXAMENTO -> rankInicial.rebaixar(1);
         };
+    }
+
+    private static ClubRank aplicarRegraEspecialRankS(Faixa faixa) {
+        return switch (faixa) {
+            case TOP_25 -> ClubRank.S;
+            case TOP_50, INTERMEDIARIA -> ClubRank.A;
+            case REBAIXAMENTO -> ClubRank.B;
+        };
+    }
+
+    /**
+     * Apenas quem iniciou como Rank A (ou já era S) pode terminar como Rank S.
+     */
+    private static ClubRank restringirAcessoRankS(ClubRank rankInicial, ClubRank resultado) {
+        if (resultado == ClubRank.S
+                && rankInicial != ClubRank.A
+                && rankInicial != ClubRank.S) {
+            return ClubRank.A;
+        }
+        return resultado;
+    }
+
+    enum Faixa {
+        TOP_25,
+        TOP_50,
+        INTERMEDIARIA,
+        REBAIXAMENTO
     }
 }
