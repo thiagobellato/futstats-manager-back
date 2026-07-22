@@ -55,6 +55,9 @@ public class Campeonato {
     @Column(name = "campeonatoDataCriacao")
     private LocalDateTime dataCriacao;
 
+    @Column(name = "campeonatoDataFinalizacao")
+    private LocalDateTime dataFinalizacao;
+
     @Column(name = "campeonatoRodadaAtual")
     private Integer rodadaAtual;
 
@@ -158,6 +161,14 @@ public class Campeonato {
 
     public void setDataCriacao(LocalDateTime dataCriacao) {
         this.dataCriacao = dataCriacao;
+    }
+
+    public LocalDateTime getDataFinalizacao() {
+        return dataFinalizacao;
+    }
+
+    public void setDataFinalizacao(LocalDateTime dataFinalizacao) {
+        this.dataFinalizacao = dataFinalizacao;
     }
 
     public Integer getRodadaAtual() {

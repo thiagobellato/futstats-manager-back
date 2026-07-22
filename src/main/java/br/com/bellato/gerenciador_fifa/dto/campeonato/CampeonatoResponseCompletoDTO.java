@@ -23,6 +23,7 @@ public class CampeonatoResponseCompletoDTO {
     private Long campeaoAnteriorClubeOrigemId;
     private String campeaoAnteriorClubeNome;
     private LocalDateTime dataCriacao;
+    private LocalDateTime dataFinalizacao;
     private Map<ClubRank, Integer> distribuicaoRanks;
     private List<CampeonatoClubeResponseDTO> clubes;
     private Long quantidadeAtletas;
@@ -123,6 +124,14 @@ public class CampeonatoResponseCompletoDTO {
 
     public void setDataCriacao(LocalDateTime dataCriacao) {
         this.dataCriacao = dataCriacao;
+    }
+
+    public LocalDateTime getDataFinalizacao() {
+        return dataFinalizacao;
+    }
+
+    public void setDataFinalizacao(LocalDateTime dataFinalizacao) {
+        this.dataFinalizacao = dataFinalizacao;
     }
 
     public Map<ClubRank, Integer> getDistribuicaoRanks() {

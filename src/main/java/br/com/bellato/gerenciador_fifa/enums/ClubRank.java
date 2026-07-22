@@ -49,6 +49,35 @@ public enum ClubRank {
         return sigla;
     }
 
+    /**
+     * Nível hierárquico: S=0 (melhor) … E=5 (pior).
+     */
+    public int getNivel() {
+        return ordinal();
+    }
+
+    public static ClubRank fromNivel(int nivel) {
+        ClubRank[] values = values();
+        int idx = Math.max(0, Math.min(values.length - 1, nivel));
+        return values[idx];
+    }
+
+    /** Promove em direção a S (melhora o rank). */
+    public ClubRank promover(int niveis) {
+        if (niveis <= 0) {
+            return this;
+        }
+        return fromNivel(getNivel() - niveis);
+    }
+
+    /** Rebaixa em direção a E (piora o rank). */
+    public ClubRank rebaixar(int niveis) {
+        if (niveis <= 0) {
+            return this;
+        }
+        return fromNivel(getNivel() + niveis);
+    }
+
     @Converter(autoApply = false)
     public static class ClubRankConverter implements AttributeConverter<ClubRank, String> {
 

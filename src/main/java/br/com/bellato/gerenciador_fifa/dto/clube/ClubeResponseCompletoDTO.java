@@ -12,6 +12,12 @@ public class ClubeResponseCompletoDTO {
     public String sigla;
     public String pais;
     public ClubRank rank;
+    public Integer golsPro;
+    public Integer golsContra;
+    public Integer vitorias;
+    public Integer empates;
+    public Integer derrotas;
+    public Integer titulos;
 
     public Long getClubeId() {
         return clubeId;
@@ -51,6 +57,54 @@ public class ClubeResponseCompletoDTO {
 
     public void setRank(ClubRank rank) {
         this.rank = rank;
+    }
+
+    public Integer getGolsPro() {
+        return golsPro;
+    }
+
+    public void setGolsPro(Integer golsPro) {
+        this.golsPro = golsPro;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
+    }
+
+    public Integer getVitorias() {
+        return vitorias;
+    }
+
+    public void setVitorias(Integer vitorias) {
+        this.vitorias = vitorias;
+    }
+
+    public Integer getEmpates() {
+        return empates;
+    }
+
+    public void setEmpates(Integer empates) {
+        this.empates = empates;
+    }
+
+    public Integer getDerrotas() {
+        return derrotas;
+    }
+
+    public void setDerrotas(Integer derrotas) {
+        this.derrotas = derrotas;
+    }
+
+    public Integer getTitulos() {
+        return titulos;
+    }
+
+    public void setTitulos(Integer titulos) {
+        this.titulos = titulos;
     }
 
 }

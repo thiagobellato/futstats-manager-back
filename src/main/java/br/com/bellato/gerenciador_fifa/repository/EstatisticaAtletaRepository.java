@@ -28,7 +28,13 @@ public interface EstatisticaAtletaRepository extends JpaRepository<EstatisticaAt
     @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.id = :atletaId AND e.dataFim IS NULL")
     Optional<EstatisticaAtleta> findByAtletaIdAndDataFimIsNull(Long atletaId);
 
-    @Query("SELECT e FROM EstatisticaAtleta e WHERE e.atleta.id = :atletaId AND e.clube.id = :clubeId AND e.dataFim IS NULL")
+    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.id = :atletaId AND e.clube.id = :clubeId AND e.dataFim IS NULL")
     Optional<EstatisticaAtleta> findEstatisticaAtiva(Long atletaId, Long clubeId);
+
+    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId IN :atletaIds")
+    List<EstatisticaAtleta> findByAtletaAtletaIdIn(@org.springframework.data.repository.query.Param("atletaIds") List<Long> atletaIds);
+
+    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId AND e.dataFim IS NULL")
+    Optional<EstatisticaAtleta> findAtivaByAtletaId(@org.springframework.data.repository.query.Param("atletaId") Long atletaId);
 
 }

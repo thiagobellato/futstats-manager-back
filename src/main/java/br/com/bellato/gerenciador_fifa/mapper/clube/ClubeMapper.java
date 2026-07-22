@@ -33,6 +33,12 @@ public class ClubeMapper {
         dto.setSigla(clube.getSigla());
         dto.setPais(clube.getPais());
         dto.setRank(clube.getRank());
+        dto.setGolsPro(clube.getGolsPro());
+        dto.setGolsContra(clube.getGolsContra());
+        dto.setVitorias(clube.getVitorias());
+        dto.setEmpates(clube.getEmpates());
+        dto.setDerrotas(clube.getDerrotas());
+        dto.setTitulos(clube.getTitulos());
 
         return dto;
     }

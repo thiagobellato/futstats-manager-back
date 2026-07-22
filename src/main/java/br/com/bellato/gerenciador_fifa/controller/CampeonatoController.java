@@ -19,6 +19,7 @@ import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoComposicaoRespon
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoCriarRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoDashboardDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoFinalizacaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoNovoAtletaRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseDTO;
@@ -31,6 +32,7 @@ import br.com.bellato.gerenciador_fifa.dto.campeonato.RegistrarPartidaRequestDTO
 import br.com.bellato.gerenciador_fifa.dto.campeonato.RemanejamentoInfoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.RemanejamentoRequestDTO;
 import br.com.bellato.gerenciador_fifa.mapper.campeonato.CampeonatoMapper;
+import br.com.bellato.gerenciador_fifa.service.CampeonatoFinalizacaoService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoMercadoService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoMotorService;
 import br.com.bellato.gerenciador_fifa.service.CampeonatoPartidaService;
@@ -56,6 +58,9 @@ public class CampeonatoController {
 
     @Autowired
     private CampeonatoMercadoService campeonatoMercadoService;
+
+    @Autowired
+    private CampeonatoFinalizacaoService campeonatoFinalizacaoService;
 
     @GetMapping
     @Operation(summary = "Listar todos os campeonatos cadastrados")
@@ -211,5 +216,15 @@ public class CampeonatoController {
             @RequestBody DefinirVencedorRequestDTO request) {
         campeonatoMotorService.escolherCampeao(id, request);
         return ResponseEntity.ok(campeonatoService.obterCompletoPorId(id));
+    }
+
+    @PostMapping("/{id}/finalizar")
+    @Operation(summary = "Finalizar campeonato e sincronizar snapshots com o banco global (irreversível)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Campeonato finalizado e sincronizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Validação falhou ou campeonato já finalizado")
+    })
+    public ResponseEntity<CampeonatoFinalizacaoResponseDTO> finalizar(@PathVariable Long id) {
+        return ResponseEntity.ok(campeonatoFinalizacaoService.finalizar(id));
     }
 }

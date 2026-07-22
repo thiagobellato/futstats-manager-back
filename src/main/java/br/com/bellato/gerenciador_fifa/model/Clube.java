@@ -36,6 +36,24 @@ public class Clube {
     @Convert(converter = ClubRankConverter.class)
     private ClubRank rank;
 
+    @Column(name = "clubeGolsPro")
+    private Integer golsPro = 0;
+
+    @Column(name = "clubeGolsContra")
+    private Integer golsContra = 0;
+
+    @Column(name = "clubeVitorias")
+    private Integer vitorias = 0;
+
+    @Column(name = "clubeEmpates")
+    private Integer empates = 0;
+
+    @Column(name = "clubeDerrotas")
+    private Integer derrotas = 0;
+
+    @Column(name = "clubeTitulos")
+    private Integer titulos = 0;
+
     @OneToMany(mappedBy = "clube", cascade = CascadeType.ALL)
     private List<Atleta> atletas;
 
@@ -87,6 +105,60 @@ public class Clube {
 
     public void setRank(ClubRank rank) {
         this.rank = rank;
+    }
+
+    public Integer getGolsPro() {
+        return golsPro;
+    }
+
+    public void setGolsPro(Integer golsPro) {
+        this.golsPro = golsPro;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
+    }
+
+    public Integer getVitorias() {
+        return vitorias;
+    }
+
+    public void setVitorias(Integer vitorias) {
+        this.vitorias = vitorias;
+    }
+
+    public Integer getEmpates() {
+        return empates;
+    }
+
+    public void setEmpates(Integer empates) {
+        this.empates = empates;
+    }
+
+    public Integer getDerrotas() {
+        return derrotas;
+    }
+
+    public void setDerrotas(Integer derrotas) {
+        this.derrotas = derrotas;
+    }
+
+    public Integer getTitulos() {
+        return titulos;
+    }
+
+    public void setTitulos(Integer titulos) {
+        this.titulos = titulos;
+    }
+
+    public int getSaldoGols() {
+        int pro = golsPro == null ? 0 : golsPro;
+        int contra = golsContra == null ? 0 : golsContra;
+        return pro - contra;
     }
 
     @Override
