@@ -41,6 +41,9 @@ public class HistoricoAtletaCampeonato {
     @Column(name = "historicoAtletaCartoesVermelhos")
     private Integer cartoesVermelhos = 0;
 
+    @Column(name = "historicoAtletaGolsContra")
+    private Integer golsContra = 0;
+
     @Column(name = "historicoAtletaTituloConquistado", nullable = false)
     private Boolean tituloConquistado = Boolean.FALSE;
 
@@ -104,6 +107,14 @@ public class HistoricoAtletaCampeonato {
 
     public void setCartoesVermelhos(Integer cartoesVermelhos) {
         this.cartoesVermelhos = cartoesVermelhos;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
     }
 
     public Boolean getTituloConquistado() {

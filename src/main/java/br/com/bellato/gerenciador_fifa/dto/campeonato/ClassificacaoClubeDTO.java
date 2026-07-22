@@ -18,6 +18,9 @@ public class ClassificacaoClubeDTO {
     private Integer golsPro;
     private Integer golsContra;
     private Integer saldoGols;
+    private String rankInicial;
+    private String rankFinal;
+    private String evolucaoRank;
 
     public Long getCampeonatoClubeId() {
         return campeonatoClubeId;
@@ -121,5 +124,29 @@ public class ClassificacaoClubeDTO {
 
     public void setSaldoGols(Integer saldoGols) {
         this.saldoGols = saldoGols;
+    }
+
+    public String getRankInicial() {
+        return rankInicial;
+    }
+
+    public void setRankInicial(String rankInicial) {
+        this.rankInicial = rankInicial;
+    }
+
+    public String getRankFinal() {
+        return rankFinal;
+    }
+
+    public void setRankFinal(String rankFinal) {
+        this.rankFinal = rankFinal;
+    }
+
+    public String getEvolucaoRank() {
+        return evolucaoRank;
+    }
+
+    public void setEvolucaoRank(String evolucaoRank) {
+        this.evolucaoRank = evolucaoRank;
     }
 }

@@ -40,6 +40,9 @@ public class EstatisticaAtleta {
     @Column(name = "atletaAssistencias")
     private Integer assistencias;
 
+    @Column(name = "atletaGolsContra")
+    private Integer golsContra;
+
     @Column(name = "atletaDataInicio")
     private LocalDate dataInicio;
 
@@ -60,6 +63,12 @@ public class EstatisticaAtleta {
         this.assistencias = assistencias;
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
+    }
+
+    public EstatisticaAtleta(Long id, Atleta atleta, Clube clube, Integer gols, Integer cartaoAmarelo,
+            Integer cartaoVermelho, Integer assistencias, Integer golsContra, LocalDate dataInicio, LocalDate dataFim) {
+        this(id, atleta, clube, gols, cartaoAmarelo, cartaoVermelho, assistencias, dataInicio, dataFim);
+        this.golsContra = golsContra;
     }
 
     public Long getId() {
@@ -116,6 +125,14 @@ public class EstatisticaAtleta {
 
     public void setAssistencias(Integer assistencias) {
         this.assistencias = assistencias;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
     }
 
     public LocalDate getDataInicio() {

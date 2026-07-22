@@ -82,6 +82,7 @@ public class CampeonatoMercadoService {
         snapshot.setAssistencias(0);
         snapshot.setCartoesAmarelos(0);
         snapshot.setCartoesVermelhos(0);
+        snapshot.setGolsContra(0);
 
         CampeonatoAtleta salvo = campeonatoAtletaRepository.save(snapshot);
         return toElencoDTO(salvo, List.of(salvo));

@@ -121,6 +121,7 @@ public class ChampionshipTransferStrategy implements AthleteTransferStrategy {
         novo.setAssistencias(0);
         novo.setCartoesAmarelos(0);
         novo.setCartoesVermelhos(0);
+        novo.setGolsContra(0);
         campeonatoAtletaRepository.save(novo);
     }
 
@@ -170,6 +171,7 @@ public class ChampionshipTransferStrategy implements AthleteTransferStrategy {
         novo.setAssistencias(0);
         novo.setCartoesAmarelos(0);
         novo.setCartoesVermelhos(0);
+        novo.setGolsContra(0);
         return novo;
     }
 

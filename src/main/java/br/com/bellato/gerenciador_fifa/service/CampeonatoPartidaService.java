@@ -119,6 +119,7 @@ public class CampeonatoPartidaService {
             atleta.setAssistencias(0);
             atleta.setCartoesAmarelos(0);
             atleta.setCartoesVermelhos(0);
+            atleta.setGolsContra(0);
             CampeonatoAtletaIdentidade.garantir(atleta);
         }
 
@@ -344,8 +345,7 @@ public class CampeonatoPartidaService {
 
     private Comparator<ClassificacaoClubeDTO> comparadorClassificacao() {
         return Comparator
-                .comparing((ClassificacaoClubeDTO c) -> Boolean.TRUE.equals(c.getEliminado()))
-                .thenComparing(c -> valor(c.getPontos()), Comparator.reverseOrder())
+                .comparing((ClassificacaoClubeDTO c) -> valor(c.getPontos()), Comparator.reverseOrder())
                 .thenComparing(c -> valor(c.getSaldoGols()), Comparator.reverseOrder())
                 .thenComparing(c -> valor(c.getGolsPro()), Comparator.reverseOrder())
                 .thenComparing(c -> valor(c.getVitorias()), Comparator.reverseOrder())
@@ -472,6 +472,8 @@ public class CampeonatoPartidaService {
             TipoEventoPartida tipo = evento.getTipo();
             if (tipo == TipoEventoPartida.GOL) {
                 atleta.setGols(valor(atleta.getGols()) + 1);
+            } else if (tipo == TipoEventoPartida.GOL_CONTRA) {
+                atleta.setGolsContra(valor(atleta.getGolsContra()) + 1);
             } else if (tipo == TipoEventoPartida.ASSISTENCIA) {
                 atleta.setAssistencias(valor(atleta.getAssistencias()) + 1);
             } else if (tipo == TipoEventoPartida.CARTAO_AMARELO) {

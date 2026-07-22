@@ -5,7 +5,11 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
 
 /**
  * Política de evolução de ranks ao finalizar campeonatos (16 / 32 / 64 clubes).
- * Movimentação limitada; campeão protegido nunca rebaixa neste campeonato.
+ * <p>
+ * A posição usada é a da classificação estatística (pontos, saldo, etc.),
+ * independente de quem foi campeão do mata-mata.
+ * O campeão recebe um bônus de +1 promoção após a regra normal.
+ * Campeão protegido nunca rebaixa neste campeonato.
  */
 public final class RankEvolutionPolicy {
 
@@ -26,11 +30,10 @@ public final class RankEvolutionPolicy {
         ClubRank atual = snapshot.getRank() != null ? snapshot.getRank() : ClubRank.E;
         int delta;
 
-        if (campeao) {
-            delta = -deltaPromocaoCampeao(atual);
-        } else if (vice) {
+        if (vice && !campeao) {
             delta = -Math.min(2, MAX_MOVIMENTO);
         } else {
+            // Campeão e demais: evolução pela classificação / desempenho
             delta = deltaPorDesempenho(atual, faseAlcancada, totalRodadas, posicaoFinal);
         }
 
@@ -40,41 +43,21 @@ public final class RankEvolutionPolicy {
 
         delta = Math.max(-MAX_MOVIMENTO, Math.min(MAX_MOVIMENTO, delta));
 
+        ClubRank resultado;
         if (delta < 0) {
-            ClubRank promovido = atual.promover(-delta);
-            // Limite de teto por rank de origem do campeão (espírito da regra)
-            if (campeao) {
-                ClubRank teto = tetoCampeao(atual);
-                if (promovido.getNivel() < teto.getNivel()) {
-                    return teto;
-                }
-            }
-            return promovido;
+            resultado = atual.promover(-delta);
+        } else if (delta > 0) {
+            resultado = atual.rebaixar(delta);
+        } else {
+            resultado = atual;
         }
-        if (delta > 0) {
-            // Rank S só cai após desempenho muito ruim (já refletido em deltaPorDesempenho)
-            return atual.rebaixar(delta);
+
+        // Bônus do título: +1 nível após a regra normal (S permanece S)
+        if (campeao) {
+            resultado = resultado.promover(1);
         }
-        return atual;
-    }
 
-    private static int deltaPromocaoCampeao(ClubRank atual) {
-        return switch (atual) {
-            case E -> 3; // até B
-            case D -> 3; // até A
-            case C -> 2; // até A
-            case B -> 1; // até S
-            case A -> 1; // até S
-            case S -> 0;
-        };
-    }
-
-    private static ClubRank tetoCampeao(ClubRank atual) {
-        return switch (atual) {
-            case E -> ClubRank.B;
-            case D, C -> ClubRank.A;
-            case B, A, S -> ClubRank.S;
-        };
+        return resultado;
     }
 
     /**
@@ -86,7 +69,7 @@ public final class RankEvolutionPolicy {
         double esperado = desempenhoEsperado(atual);
         double diff = performance - esperado;
 
-        // Ajuste fino pela posição relativa (pior colocação pressiona rebaixamento)
+        // Ajuste fino pela posição relativa na classificação (pior colocação pressiona rebaixamento)
         if (posicaoFinal > rodadas * 4) {
             diff -= 0.15;
         }

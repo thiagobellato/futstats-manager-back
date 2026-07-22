@@ -21,6 +21,7 @@ import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoDashboardDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoFinalizacaoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoNovoAtletaRequestDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResumoFinalDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResponseDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoTransferirAtletaRequestDTO;
@@ -216,6 +217,12 @@ public class CampeonatoController {
             @RequestBody DefinirVencedorRequestDTO request) {
         campeonatoMotorService.escolherCampeao(id, request);
         return ResponseEntity.ok(campeonatoService.obterCompletoPorId(id));
+    }
+
+    @GetMapping("/{id}/finalizar/resumo")
+    @Operation(summary = "Obter resumo final do campeonato antes de confirmar a sincronização global")
+    public ResponseEntity<CampeonatoResumoFinalDTO> obterResumoFinal(@PathVariable Long id) {
+        return ResponseEntity.ok(campeonatoFinalizacaoService.obterResumoFinal(id));
     }
 
     @PostMapping("/{id}/finalizar")

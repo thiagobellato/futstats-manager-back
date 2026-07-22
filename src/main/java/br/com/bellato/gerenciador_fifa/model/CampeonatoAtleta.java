@@ -65,6 +65,9 @@ public class CampeonatoAtleta {
     @Column(name = "campeonatoAtletaCartoesVermelhos")
     private Integer cartoesVermelhos = 0;
 
+    @Column(name = "campeonatoAtletaGolsContra")
+    private Integer golsContra = 0;
+
     @Column(name = "campeonatoAtletaAtivo")
     private Boolean ativo = Boolean.TRUE;
 
@@ -179,6 +182,14 @@ public class CampeonatoAtleta {
 
     public void setCartoesVermelhos(Integer cartoesVermelhos) {
         this.cartoesVermelhos = cartoesVermelhos;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
     }
 
     public String getIdentidade() {

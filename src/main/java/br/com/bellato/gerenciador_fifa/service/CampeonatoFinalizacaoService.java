@@ -19,7 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoEstatisticasDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoFinalizacaoResponseDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.CampeonatoResumoFinalDTO;
+import br.com.bellato.gerenciador_fifa.dto.campeonato.ClassificacaoClubeDTO;
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.enums.StatusCampeonato;
 import br.com.bellato.gerenciador_fifa.enums.StatusPartida;
@@ -43,6 +46,7 @@ import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoAtletaCampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoClubeCampeonatoRepository;
+import br.com.bellato.gerenciador_fifa.service.finalizacao.RankEvolucaoResultado;
 import br.com.bellato.gerenciador_fifa.service.finalizacao.RankEvolutionPolicy;
 import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
 
@@ -78,27 +82,74 @@ public class CampeonatoFinalizacaoService {
     @Autowired
     private HistoricoAtletaCampeonatoRepository historicoAtletaCampeonatoRepository;
 
+    @Autowired
+    private CampeonatoPartidaService campeonatoPartidaService;
+
+    /**
+     * Pré-visualização do resumo final (sem persistir). Usa a mesma política de ranks da finalização.
+     */
+    @Transactional(readOnly = true)
+    public CampeonatoResumoFinalDTO obterResumoFinal(Long campeonatoId) {
+        Campeonato campeonato = carregarCampeonatoParaFinalizacao(campeonatoId);
+        validarAntesDeFinalizar(campeonato);
+
+        CampeonatoEstatisticasDTO estatisticas = campeonatoPartidaService.obterEstatisticas(campeonatoId);
+        CampeonatoClube campeao = campeonato.getCampeaoClube();
+        CampeonatoClube vice = resolverVice(campeonato, campeao);
+        Map<Long, RankEvolucaoResultado> evolucoes = calcularEvolucoesRanks(campeonato, campeao, vice);
+
+        List<ClassificacaoClubeDTO> classificacao = new ArrayList<>(
+                estatisticas.getClassificacao() != null ? estatisticas.getClassificacao() : List.of());
+        for (ClassificacaoClubeDTO row : classificacao) {
+            RankEvolucaoResultado ev = evolucoes.get(row.getCampeonatoClubeId());
+            if (ev == null) {
+                continue;
+            }
+            row.setRankInicial(ev.rankInicial() != null ? ev.rankInicial().getSigla() : null);
+            row.setRankFinal(ev.rankFinal() != null ? ev.rankFinal().getSigla() : null);
+            row.setEvolucaoRank(ev.movimento());
+        }
+
+        CampeonatoResumoFinalDTO resumo = new CampeonatoResumoFinalDTO();
+        resumo.setCampeonatoId(campeonatoId);
+        resumo.setNome(campeonato.getNome());
+        resumo.setFormato(campeonato.getQuantidadeClubes());
+        resumo.setCampeaoClubeId(campeao.getCampeonatoClubeId());
+        resumo.setCampeaoClubeNome(campeao.getNome());
+        resumo.setCampeaoCompetidor(campeonato.getCampeaoCompetidor());
+        resumo.setCampeaoCompetidorNome(nomeCompetidor(campeonato, campeonato.getCampeaoCompetidor()));
+
+        if (vice != null) {
+            resumo.setViceCampeaoClubeId(vice.getCampeonatoClubeId());
+            resumo.setViceCampeaoClubeNome(vice.getNome());
+            resumo.setViceCompetidor(vice.getCompetidorNumero());
+            resumo.setViceCompetidorNome(nomeCompetidor(campeonato, vice.getCompetidorNumero()));
+        }
+
+        if (estatisticas.getDashboard() != null) {
+            var dash = estatisticas.getDashboard();
+            resumo.setArtilheiro(dash.getArtilheiro());
+            resumo.setLiderAssistencias(dash.getLiderAssistencias());
+            resumo.setMaisCartoesAmarelos(dash.getMaisCartoesAmarelos());
+            resumo.setMaisCartoesVermelhos(dash.getMaisCartoesVermelhos());
+            resumo.setMelhorAtaque(dash.getMelhorAtaque());
+            resumo.setMelhorDefesa(dash.getMelhorDefesa());
+            resumo.setMaiorSaldo(dash.getMaiorSaldo());
+        }
+
+        resumo.setClassificacao(classificacao);
+        return resumo;
+    }
+
     @Transactional
     public CampeonatoFinalizacaoResponseDTO finalizar(Long campeonatoId) {
-        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
-                .orElseThrow(() -> new CampeonatoBusinessException("Campeonato não encontrado."));
+        Campeonato campeonato = carregarCampeonatoParaFinalizacao(campeonatoId);
 
         validarAntesDeFinalizar(campeonato);
 
-        // Recarrega coleções necessárias
-        if (campeonato.getClubes() != null) {
-            campeonato.getClubes().size();
-        }
-        if (campeonato.getRodadas() != null) {
-            campeonato.getRodadas().forEach(r -> {
-                if (r.getPartidas() != null) {
-                    r.getPartidas().size();
-                }
-            });
-        }
-        if (campeonato.getCampeaoClube() != null) {
-            campeonato.getCampeaoClube().getNome();
-        }
+        // Garante gols contra (e demais eventos) atualizados nos snapshots antes do sync global
+        campeonatoPartidaService.recalcularEstatisticasCampeonato(campeonatoId);
+        campeonato = carregarCampeonatoParaFinalizacao(campeonatoId);
 
         List<CampeonatoAtleta> snapshots = campeonatoAtletaRepository.findByCampeonatoCampeonatoId(campeonatoId);
         for (CampeonatoAtleta s : snapshots) {
@@ -118,9 +169,11 @@ public class CampeonatoFinalizacaoService {
         Map<Long, Integer> fasePorClube = calcularFaseAlcancada(campeonato);
         Map<Long, Integer> posicoes = calcularPosicoesFinais(
                 campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, totalRodadas);
+        Map<Long, RankEvolucaoResultado> evolucoes = calcularEvolucoesRanks(
+                campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, posicoes, totalRodadas);
 
         int ranksAlterados = sincronizarClubesERanks(
-                campeonato, clubesGlobais, campeaoSnapshot, viceSnapshot, fasePorClube, posicoes, totalRodadas);
+                campeonato, clubesGlobais, campeaoSnapshot, evolucoes, fasePorClube, posicoes);
 
         registrarResultado(campeonato, campeaoGlobal, viceGlobal);
         registrarHistoricoAtletas(campeonato, porIdentidade, syncAtletas.atletaPorIdentidade(), campeaoSnapshot);
@@ -151,6 +204,78 @@ public class CampeonatoFinalizacaoService {
         response.setClubesAtualizados(clubesGlobais.size());
         response.setRanksAlterados(ranksAlterados);
         return response;
+    }
+
+    private Campeonato carregarCampeonatoParaFinalizacao(Long campeonatoId) {
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() -> new CampeonatoBusinessException("Campeonato não encontrado."));
+        if (campeonato.getClubes() != null) {
+            campeonato.getClubes().size();
+        }
+        if (campeonato.getRodadas() != null) {
+            campeonato.getRodadas().forEach(r -> {
+                if (r.getPartidas() != null) {
+                    r.getPartidas().size();
+                }
+            });
+        }
+        if (campeonato.getCampeaoClube() != null) {
+            campeonato.getCampeaoClube().getNome();
+        }
+        return campeonato;
+    }
+
+    private String nomeCompetidor(Campeonato campeonato, Integer numero) {
+        if (Objects.equals(numero, 1)) {
+            return campeonato.getCompetidor1Nome();
+        }
+        if (Objects.equals(numero, 2)) {
+            return campeonato.getCompetidor2Nome();
+        }
+        return null;
+    }
+
+    /**
+     * Calcula evolução de ranks com a mesma política da finalização (sem persistir).
+     */
+    Map<Long, RankEvolucaoResultado> calcularEvolucoesRanks(
+            Campeonato campeonato,
+            CampeonatoClube campeaoSnapshot,
+            CampeonatoClube viceSnapshot) {
+        int totalRodadas = campeonato.getRodadas() == null ? 1 : Math.max(1, campeonato.getRodadas().size());
+        Map<Long, Integer> fasePorClube = calcularFaseAlcancada(campeonato);
+        Map<Long, Integer> posicoes = calcularPosicoesFinais(
+                campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, totalRodadas);
+        return calcularEvolucoesRanks(campeonato, campeaoSnapshot, viceSnapshot, fasePorClube, posicoes, totalRodadas);
+    }
+
+    private Map<Long, RankEvolucaoResultado> calcularEvolucoesRanks(
+            Campeonato campeonato,
+            CampeonatoClube campeaoSnapshot,
+            CampeonatoClube viceSnapshot,
+            Map<Long, Integer> fasePorClube,
+            Map<Long, Integer> posicoes,
+            int totalRodadas) {
+
+        Map<Long, RankEvolucaoResultado> mapa = new LinkedHashMap<>();
+        if (campeonato.getClubes() == null) {
+            return mapa;
+        }
+        for (CampeonatoClube snap : campeonato.getClubes()) {
+            ClubRank rankBase = snap.getRank() != null ? snap.getRank() : ClubRank.E;
+            boolean campeao = Objects.equals(snap.getCampeonatoClubeId(), campeaoSnapshot.getCampeonatoClubeId());
+            boolean vice = viceSnapshot != null
+                    && Objects.equals(snap.getCampeonatoClubeId(), viceSnapshot.getCampeonatoClubeId());
+            boolean protegido = Boolean.TRUE.equals(snap.getCampeaoAnterior());
+            int posicao = posicoes.getOrDefault(snap.getCampeonatoClubeId(), campeonato.getQuantidadeClubes());
+            int fase = fasePorClube.getOrDefault(snap.getCampeonatoClubeId(), 0);
+
+            ClubRank rankNovo = RankEvolutionPolicy.calcularNovoRank(
+                    snap, posicao, fase, totalRodadas, campeao, vice, protegido);
+            mapa.put(snap.getCampeonatoClubeId(),
+                    new RankEvolucaoResultado(snap.getCampeonatoClubeId(), rankBase, rankNovo));
+        }
+        return mapa;
     }
 
     private void validarAntesDeFinalizar(Campeonato campeonato) {
@@ -460,6 +585,7 @@ public class CampeonatoFinalizacaoService {
                 novoPeriodo.setAssistencias(0);
                 novoPeriodo.setCartaoAmarelo(0);
                 novoPeriodo.setCartaoVermelho(0);
+                novoPeriodo.setGolsContra(0);
                 acumular(novoPeriodo, vinculo);
                 if (!ultimo) {
                     novoPeriodo.setDataFim(vinculo.getDataFim() != null ? vinculo.getDataFim() : LocalDate.now());
@@ -506,6 +632,7 @@ public class CampeonatoFinalizacaoService {
         novo.setAssistencias(0);
         novo.setCartaoAmarelo(0);
         novo.setCartaoVermelho(0);
+        novo.setGolsContra(0);
         statsAtleta.add(novo);
         return novo;
     }
@@ -515,16 +642,16 @@ public class CampeonatoFinalizacaoService {
         alvo.setAssistencias(nvl(alvo.getAssistencias()) + nvl(vinculo.getAssistencias()));
         alvo.setCartaoAmarelo(nvl(alvo.getCartaoAmarelo()) + nvl(vinculo.getCartoesAmarelos()));
         alvo.setCartaoVermelho(nvl(alvo.getCartaoVermelho()) + nvl(vinculo.getCartoesVermelhos()));
+        alvo.setGolsContra(nvl(alvo.getGolsContra()) + nvl(vinculo.getGolsContra()));
     }
 
     private int sincronizarClubesERanks(
             Campeonato campeonato,
             Map<Long, Clube> clubesGlobais,
             CampeonatoClube campeaoSnapshot,
-            CampeonatoClube viceSnapshot,
+            Map<Long, RankEvolucaoResultado> evolucoes,
             Map<Long, Integer> fasePorClube,
-            Map<Long, Integer> posicoes,
-            int totalRodadas) {
+            Map<Long, Integer> posicoes) {
 
         List<HistoricoClubeCampeonato> historicos = new ArrayList<>();
         List<Clube> clubesParaSalvar = new ArrayList<>();
@@ -543,27 +670,19 @@ public class CampeonatoFinalizacaoService {
             global.setDerrotas(nvl(global.getDerrotas()) + nvl(snap.getDerrotas()));
 
             boolean campeao = Objects.equals(snap.getCampeonatoClubeId(), campeaoSnapshot.getCampeonatoClubeId());
-            boolean vice = viceSnapshot != null
-                    && Objects.equals(snap.getCampeonatoClubeId(), viceSnapshot.getCampeonatoClubeId());
-            boolean protegido = Boolean.TRUE.equals(snap.getCampeaoAnterior());
-
             if (campeao) {
                 global.setTitulos(nvl(global.getTitulos()) + 1);
             }
 
-            ClubRank rankAnterior = global.getRank() != null ? global.getRank()
+            RankEvolucaoResultado evolucao = evolucoes.get(snap.getCampeonatoClubeId());
+            ClubRank rankBase = evolucao != null && evolucao.rankInicial() != null
+                    ? evolucao.rankInicial()
                     : (snap.getRank() != null ? snap.getRank() : ClubRank.E);
-            // Usa o rank do snapshot (início do campeonato) como base da evolução
-            ClubRank rankBase = snap.getRank() != null ? snap.getRank() : rankAnterior;
-            snap.setRank(rankBase);
+            ClubRank rankNovo = evolucao != null && evolucao.rankFinal() != null
+                    ? evolucao.rankFinal()
+                    : rankBase;
 
-            int posicao = posicoes.getOrDefault(snap.getCampeonatoClubeId(), campeonato.getQuantidadeClubes());
-            int fase = fasePorClube.getOrDefault(snap.getCampeonatoClubeId(), 0);
-
-            ClubRank rankNovo = RankEvolutionPolicy.calcularNovoRank(
-                    snap, posicao, fase, totalRodadas, campeao, vice, protegido);
-
-            if (rankNovo != rankAnterior) {
+            if (rankNovo != rankBase) {
                 ranksAlterados++;
             }
             global.setRank(rankNovo);
@@ -572,12 +691,12 @@ public class CampeonatoFinalizacaoService {
             HistoricoClubeCampeonato hist = new HistoricoClubeCampeonato();
             hist.setClube(global);
             hist.setCampeonato(campeonato);
-            hist.setPosicaoFinal(posicao);
+            hist.setPosicaoFinal(posicoes.getOrDefault(snap.getCampeonatoClubeId(), campeonato.getQuantidadeClubes()));
             hist.setRankAnterior(rankBase);
             hist.setRankNovo(rankNovo);
             hist.setTituloConquistado(campeao);
             hist.setEliminado(Boolean.TRUE.equals(snap.getEliminado()));
-            hist.setFaseAlcancada(fase);
+            hist.setFaseAlcancada(fasePorClube.getOrDefault(snap.getCampeonatoClubeId(), 0));
             hist.setJogos(nvl(snap.getJogos()));
             hist.setVitorias(nvl(snap.getVitorias()));
             hist.setEmpates(nvl(snap.getEmpates()));
@@ -586,8 +705,9 @@ public class CampeonatoFinalizacaoService {
             hist.setGolsContra(nvl(snap.getGolsContra()));
             historicos.add(hist);
 
-            log.info("Clube {} rank {} → {} (posição {}, campeão={}, protegido={})",
-                    global.getNome(), rankBase, rankNovo, posicao, campeao, protegido);
+            log.info("Clube {} rank {} → {} (posição {}, campeão={})",
+                    global.getNome(), rankBase, rankNovo,
+                    hist.getPosicaoFinal(), campeao);
         }
 
         clubeRepository.saveAll(clubesParaSalvar);
@@ -642,12 +762,14 @@ public class CampeonatoFinalizacaoService {
             int assistencias = 0;
             int amarelos = 0;
             int vermelhos = 0;
+            int golsContra = 0;
             List<String> clubes = new ArrayList<>();
             for (CampeonatoAtleta v : vinculos) {
                 gols += nvl(v.getGols());
                 assistencias += nvl(v.getAssistencias());
                 amarelos += nvl(v.getCartoesAmarelos());
                 vermelhos += nvl(v.getCartoesVermelhos());
+                golsContra += nvl(v.getGolsContra());
                 String nomeClube = v.getCampeonatoClube() != null ? v.getCampeonatoClube().getNome() : null;
                 if (nomeClube != null && !clubes.contains(nomeClube)) {
                     clubes.add(nomeClube);
@@ -661,6 +783,7 @@ public class CampeonatoFinalizacaoService {
             hist.setAssistencias(assistencias);
             hist.setCartoesAmarelos(amarelos);
             hist.setCartoesVermelhos(vermelhos);
+            hist.setGolsContra(golsContra);
             hist.setTransferencias(Math.max(0, vinculos.size() - 1));
             hist.setClubesDefendidos(String.join(", ", clubes));
             hist.setTituloConquistado(atletasCampeoes.contains(atleta.getAtletaId())
@@ -745,6 +868,10 @@ public class CampeonatoFinalizacaoService {
         return fase;
     }
 
+    /**
+     * Posições da classificação estatística (pontos, saldo, GP…),
+     * sem privilegiar campeão/vice do mata-mata.
+     */
     private Map<Long, Integer> calcularPosicoesFinais(
             Campeonato campeonato,
             CampeonatoClube campeao,
@@ -753,24 +880,22 @@ public class CampeonatoFinalizacaoService {
             int totalRodadas) {
 
         Map<Long, Integer> posicoes = new HashMap<>();
-        posicoes.put(campeao.getCampeonatoClubeId(), 1);
-        if (vice != null) {
-            posicoes.put(vice.getCampeonatoClubeId(), 2);
+        if (campeonato.getClubes() == null || campeonato.getClubes().isEmpty()) {
+            return posicoes;
         }
 
-        List<CampeonatoClube> restantes = campeonato.getClubes().stream()
-                .filter(c -> !posicoes.containsKey(c.getCampeonatoClubeId()))
+        List<CampeonatoClube> ordenados = campeonato.getClubes().stream()
                 .sorted(Comparator
-                        .comparing((CampeonatoClube c) -> fasePorClube.getOrDefault(c.getCampeonatoClubeId(), 0))
-                        .reversed()
-                        .thenComparing(c -> nvl(c.getPontos()), Comparator.reverseOrder())
-                        .thenComparing(c -> c.getSaldoGols(), Comparator.reverseOrder())
+                        .comparing((CampeonatoClube c) -> nvl(c.getPontos()), Comparator.reverseOrder())
+                        .thenComparing(CampeonatoClube::getSaldoGols, Comparator.reverseOrder())
                         .thenComparing(c -> nvl(c.getGolsPro()), Comparator.reverseOrder())
+                        .thenComparing(c -> nvl(c.getVitorias()), Comparator.reverseOrder())
+                        .thenComparing(c -> nvl(c.getDerrotas()))
                         .thenComparing(CampeonatoClube::getNome, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .collect(Collectors.toList());
 
-        int pos = vice != null ? 3 : 2;
-        for (CampeonatoClube c : restantes) {
+        int pos = 1;
+        for (CampeonatoClube c : ordenados) {
             posicoes.put(c.getCampeonatoClubeId(), pos++);
         }
         return posicoes;

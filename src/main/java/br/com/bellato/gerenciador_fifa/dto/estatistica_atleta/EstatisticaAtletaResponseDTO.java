@@ -12,6 +12,7 @@ public class EstatisticaAtletaResponseDTO {
     private Integer assistencias;
     private Integer cartaoAmarelo;
     private Integer cartaoVermelho;
+    private Integer golsContra;
     private Long atletaId;
 
     public Long getEstatisticaAtletaId() {
@@ -68,6 +69,14 @@ public class EstatisticaAtletaResponseDTO {
 
     public void setCartaoVermelho(Integer cartaoVermelho) {
         this.cartaoVermelho = cartaoVermelho;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
     }
 
     public Long getAtletaId() {

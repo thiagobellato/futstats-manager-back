@@ -69,6 +69,9 @@ public class GlobalTransferStrategy implements AthleteTransferStrategy {
         novaEstatistica.setDataInicio(LocalDate.now());
         novaEstatistica.setGols(0);
         novaEstatistica.setAssistencias(0);
+        novaEstatistica.setCartaoAmarelo(0);
+        novaEstatistica.setCartaoVermelho(0);
+        novaEstatistica.setGolsContra(0);
         estatisticaAtletaRepository.save(novaEstatistica);
 
         atleta.setClube(novoClube);

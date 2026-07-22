@@ -18,6 +18,7 @@ public class EstatisticaAtletaMapper {
         estatisticaAtleta.setAssistencias(dto.getAssistencias());
         estatisticaAtleta.setCartaoAmarelo(dto.getCartaoAmarelo());
         estatisticaAtleta.setCartaoVermelho(dto.getCartaoVermelho());
+        estatisticaAtleta.setGolsContra(dto.getGolsContra() != null ? dto.getGolsContra() : 0);
         estatisticaAtleta.setDataInicio(LocalDate.now());
 
         return estatisticaAtleta;
@@ -34,6 +35,7 @@ public class EstatisticaAtletaMapper {
         dto.setAssistencias(estatisticaAtleta.getAssistencias());
         dto.setCartaoAmarelo(estatisticaAtleta.getCartaoAmarelo());
         dto.setCartaoVermelho(estatisticaAtleta.getCartaoVermelho());
+        dto.setGolsContra(estatisticaAtleta.getGolsContra());
 
         return dto;
     }

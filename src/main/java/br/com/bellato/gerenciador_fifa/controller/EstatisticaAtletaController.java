@@ -91,7 +91,8 @@ public class EstatisticaAtletaController {
                                         request.getGols(),
                                         request.getAssistencias(),
                                         request.getCartaoAmarelo(),
-                                        request.getCartaoVermelho());
+                                        request.getCartaoVermelho(),
+                                        request.getGolsContra());
 
                         if (atualizou) {
                                 return ResponseEntity.ok("Estatística atualizada com sucesso!");

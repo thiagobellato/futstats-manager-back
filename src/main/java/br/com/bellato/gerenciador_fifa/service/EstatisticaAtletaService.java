@@ -43,11 +43,13 @@ public class EstatisticaAtletaService {
             dto.setAssistencias(estatistica.getAssistencias());
             dto.setCartaoAmarelo(estatistica.getCartaoAmarelo());
             dto.setCartaoVermelho(estatistica.getCartaoVermelho());
+            dto.setGolsContra(estatistica.getGolsContra());
             return dto;
         }).orElse(null);
     }
 
-    public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias, Integer cartaoAmarelo, Integer cartaoVermelho) {
+    public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias,
+            Integer cartaoAmarelo, Integer cartaoVermelho, Integer golsContra) {
         Optional<EstatisticaAtleta> optionalEstatistica = estatisticaRepository.findEstatisticaAtiva(atletaId, clubeId);
 
         if (optionalEstatistica.isPresent()) {
@@ -56,11 +58,20 @@ public class EstatisticaAtletaService {
             estatistica.setAssistencias(assistencias);
             estatistica.setCartaoAmarelo(cartaoAmarelo);
             estatistica.setCartaoVermelho(cartaoVermelho);
+            if (golsContra != null) {
+                estatistica.setGolsContra(golsContra);
+            }
             estatisticaRepository.save(estatistica);
             return true;
         }
 
         return false;
+    }
+
+    /** Compatibilidade com chamadas antigas sem gols contra. */
+    public boolean atualizarEstatistica(Long atletaId, Long clubeId, Integer gols, Integer assistencias,
+            Integer cartaoAmarelo, Integer cartaoVermelho) {
+        return atualizarEstatistica(atletaId, clubeId, gols, assistencias, cartaoAmarelo, cartaoVermelho, null);
     }
 
     // public EstatisticaAtleta obterPorId(Long atletaId) {
