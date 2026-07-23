@@ -17,8 +17,6 @@ public interface CampeonatoResultadoRepository extends JpaRepository<CampeonatoR
 
     boolean existsByCampeonatoCampeonatoId(Long campeonatoId);
 
-    Optional<CampeonatoResultado> findByCampeonatoCampeonatoId(Long campeonatoId);
-
     @Query("""
             SELECT r FROM CampeonatoResultado r
             JOIN FETCH r.campeonato c
@@ -36,16 +34,6 @@ public interface CampeonatoResultadoRepository extends JpaRepository<CampeonatoR
             WHERE c.campeonatoId = :campeonatoId
             """)
     Optional<CampeonatoResultado> findDetalhadoByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
-
-    @Query("""
-            SELECT r.campeaoClube.clubeId, r.campeaoClube.nome, COUNT(r)
-            FROM CampeonatoResultado r
-            WHERE (:busca IS NULL OR :busca = ''
-                   OR LOWER(r.campeaoClube.nome) LIKE LOWER(CONCAT('%', :busca, '%')))
-            GROUP BY r.campeaoClube.clubeId, r.campeaoClube.nome
-            ORDER BY COUNT(r) DESC, r.campeaoClube.nome ASC
-            """)
-    Page<Object[]> rankingCampeoes(@Param("busca") String busca, Pageable pageable);
 
     @Query("""
             SELECT r.viceCampeaoClube.clubeId, r.viceCampeaoClube.nome, COUNT(r)

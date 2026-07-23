@@ -55,17 +55,6 @@ public enum StatusCampeonato {
         return codigo;
     }
 
-    public boolean isAtivo() {
-        return this != EM_CONFIGURACAO
-                && this != AGUARDANDO_ESCOLHA_DO_CAMPEAO
-                && this != AGUARDANDO_FINALIZACAO
-                && this != FINALIZADO;
-    }
-
-    public boolean possuiCampeaoDefinido() {
-        return this == AGUARDANDO_FINALIZACAO || this == FINALIZADO;
-    }
-
     @Converter(autoApply = false)
     public static class StatusCampeonatoConverter implements AttributeConverter<StatusCampeonato, String> {
 

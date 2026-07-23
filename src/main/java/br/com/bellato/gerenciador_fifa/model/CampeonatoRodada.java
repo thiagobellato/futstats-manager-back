@@ -16,9 +16,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
+
+import org.hibernate.annotations.BatchSize;
 
 @Entity
-@Table(name = "campeonato_rodada")
+@Table(name = "campeonato_rodada", indexes = {
+        @Index(name = "idx_camp_rodada_campeonato", columnList = "campeonato_id")
+})
 public class CampeonatoRodada {
 
     @Id
@@ -47,6 +52,7 @@ public class CampeonatoRodada {
     private Integer competidorRemanejamento;
 
     @OneToMany(mappedBy = "campeonatoRodada", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 32)
     private List<CampeonatoPartida> partidas = new ArrayList<>();
 
     public CampeonatoRodada() {

@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import br.com.bellato.gerenciador_fifa.dto.campeonato.PartidaEventoRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.campeonato.RegistrarPartidaRequestDTO;
-import br.com.bellato.gerenciador_fifa.enums.TipoEventoPartida;
 import br.com.bellato.gerenciador_fifa.exception.CampeonatoBusinessException;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
@@ -219,9 +218,5 @@ public final class PartidaRegistroValidator {
             return atleta.getNome();
         }
         return atleta.getNome() + " " + atleta.getSobrenome();
-    }
-
-    public static boolean isTipoValido(TipoEventoPartida tipo) {
-        return tipo != null;
     }
 }

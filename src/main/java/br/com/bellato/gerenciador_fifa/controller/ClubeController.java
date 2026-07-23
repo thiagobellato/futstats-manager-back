@@ -28,7 +28,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-// @CrossOrigin("*")
 @RequestMapping("/api/clube")
 @Tag(name = "Métodos do Clube")
 public class ClubeController {

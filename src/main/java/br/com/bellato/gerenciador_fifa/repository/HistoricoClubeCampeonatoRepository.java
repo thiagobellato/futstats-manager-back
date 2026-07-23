@@ -14,8 +14,6 @@ import br.com.bellato.gerenciador_fifa.model.HistoricoClubeCampeonato;
 @Repository
 public interface HistoricoClubeCampeonatoRepository extends JpaRepository<HistoricoClubeCampeonato, Long> {
 
-    boolean existsByCampeonatoCampeonatoId(Long campeonatoId);
-
     List<HistoricoClubeCampeonato> findByCampeonatoCampeonatoId(Long campeonatoId);
 
     @Query("""

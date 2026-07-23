@@ -14,10 +14,6 @@ import br.com.bellato.gerenciador_fifa.model.HistoricoAtletaCampeonato;
 @Repository
 public interface HistoricoAtletaCampeonatoRepository extends JpaRepository<HistoricoAtletaCampeonato, Long> {
 
-    boolean existsByCampeonatoCampeonatoId(Long campeonatoId);
-
-    List<HistoricoAtletaCampeonato> findByCampeonatoCampeonatoId(Long campeonatoId);
-
     @Query("""
             SELECT h FROM HistoricoAtletaCampeonato h
             JOIN FETCH h.campeonato c

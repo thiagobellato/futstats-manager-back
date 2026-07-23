@@ -40,16 +40,12 @@ public class AtletaService {
     private AthleteTransferService athleteTransferService;
 
     public List<Atleta> obterTodos() {
-        List<Atleta> tipos = atletaRepository.findAll();
-
-        return tipos
-                .stream()
-                .collect(Collectors.toList());
+        return atletaRepository.findAllComClube();
     }
 
     public Atleta obterPorId(long id) {
-        return atletaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nenhum registro encontrado para o ID: " + id));
+        return atletaRepository.findByIdComClube(id)
+                .orElseThrow(() -> new EntityNotFoundException("Atleta não encontrado com o ID: " + id));
     }
 
     public AtletaResponseDTO adicionar(AtletaRequestDTO dto) {
@@ -57,7 +53,7 @@ public class AtletaService {
         Clube clube = null;
         if (dto.getClubeId() != null) {
             clube = clubeRepository.findById(dto.getClubeId())
-                    .orElseThrow(() -> new RuntimeException("Clube não encontrado com ID: " + dto.getClubeId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com ID: " + dto.getClubeId()));
         }
 
         Atleta atleta = AtletaMapper.toEntity(dto, clube);
@@ -86,8 +82,6 @@ public class AtletaService {
                 .filter(a -> a.getClube() != null) // só gera se tiver clube
                 .map(atleta -> {
                     EstatisticaAtletaRequestDTO estatistica = new EstatisticaAtletaRequestDTO();
-                    // estatistica.setAtletaId(atleta.getAtletaId());
-                    // estatistica.setClubeId(atleta.getClube().getClubeId());
                     estatistica.setGols(0);
                     estatistica.setAssistencias(0);
 

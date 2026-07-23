@@ -75,7 +75,12 @@ public class CampeonatoService {
 
     @Transactional(readOnly = true)
     public CampeonatoResponseCompletoDTO obterCompletoPorId(Long id) {
-        Campeonato campeonato = obterPorId(id);
+        // Carrega associações em queries separadas (evita MultipleBagFetchException).
+        Campeonato campeonato = campeonatoRepository.findByIdComClubesECampeao(id)
+                .orElseThrow(() -> new EntityNotFoundException("Campeonato não encontrado com o ID: " + id));
+        campeonatoRepository.findByIdComDistribuicao(id);
+        campeonatoRepository.findByIdComRodadas(id);
+
         if (campeonato.getRodadas() != null) {
             campeonato.getRodadas().forEach(rodada -> {
                 if (rodada.getPartidas() != null) {
@@ -83,14 +88,11 @@ public class CampeonatoService {
                 }
             });
         }
-        if (campeonato.getCampeaoClube() != null) {
-            campeonato.getCampeaoClube().getNome();
-        }
-        List<br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta> atletas =
-                campeonatoAtletaRepository.findByCampeonatoCampeonatoId(id);
+
+        List<CampeonatoAtleta> atletas = campeonatoAtletaRepository.findByCampeonatoCampeonatoId(id);
         Map<Long, Long> atletasPorClube = new HashMap<>();
         long atletasAtivos = 0;
-        for (br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta atleta : atletas) {
+        for (CampeonatoAtleta atleta : atletas) {
             if (!atleta.isAtivo()) {
                 continue;
             }

@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol;
 import br.com.bellato.gerenciador_fifa.enums.PosicaoFutebol.PosicaoFutebolConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;/*  */
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

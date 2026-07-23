@@ -13,9 +13,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "campeonato_atleta")
+@Table(name = "campeonato_atleta", indexes = {
+        @Index(name = "idx_camp_atleta_campeonato", columnList = "campeonato_id"),
+        @Index(name = "idx_camp_atleta_clube", columnList = "campeonato_clube_id"),
+        @Index(name = "idx_camp_atleta_origem", columnList = "campeonatoAtletaOrigemId")
+})
 public class CampeonatoAtleta {
 
     @Id

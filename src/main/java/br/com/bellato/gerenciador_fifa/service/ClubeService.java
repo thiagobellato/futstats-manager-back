@@ -35,7 +35,7 @@ public class ClubeService {
 
     public Clube obterPorId(long id) {
         return clubeRepository.findByIdComEstatistica(id)
-                .orElseThrow(() -> new RuntimeException("Nenhum registro encontrado para o ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Clube não encontrado com o ID: " + id));
     }
 
     @Transactional
@@ -102,7 +102,7 @@ public class ClubeService {
     }
 
     @Transactional
-    public EstatisticaClube obterOuCriarEstatistica(Clube clube) {
+    private EstatisticaClube obterOuCriarEstatistica(Clube clube) {
         if (clube.getEstatistica() != null) {
             return clube.getEstatistica();
         }

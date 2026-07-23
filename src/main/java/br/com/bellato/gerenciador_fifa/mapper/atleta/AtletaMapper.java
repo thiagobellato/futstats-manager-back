@@ -43,10 +43,10 @@ public class AtletaMapper {
 
         if (atleta.getClube() != null) {
             dto.setClubeNome(StringUtils.defaultIfBlank(atleta.getClube().getNome(), "Sem Clube"));
-            dto.setClubeId(atleta.getClube().getClubeId()); // <-- ADICIONE ISSO AQUI
+            dto.setClubeId(atleta.getClube().getClubeId());
         } else {
             dto.setClubeNome("Sem Clube");
-            dto.setClubeId(null); // <-- EVITA QUE FIQUE PRESO EM ALGUM VALOR
+            dto.setClubeId(null);
         }
 
         return dto;

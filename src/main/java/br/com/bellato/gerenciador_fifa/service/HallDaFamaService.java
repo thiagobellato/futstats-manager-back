@@ -960,128 +960,6 @@ public class HallDaFamaService {
     // Recordes
     // -------------------------------------------------------------------------
 
-    private List<HallRecordeItemDTO> topClubesTitulos(List<CampeonatoResultado> resultados) {
-        Map<Long, AggNome> map = new HashMap<>();
-        for (CampeonatoResultado r : resultados) {
-            if (r.getCampeaoClube() == null) {
-                continue;
-            }
-            Clube c = r.getCampeaoClube();
-            AggNome a = map.computeIfAbsent(c.getClubeId(), id -> new AggNome(id, c.getNome()));
-            a.valor++;
-        }
-        return topAgg(map, "títulos");
-    }
-
-    private List<HallRecordeItemDTO> topClubesVices(List<CampeonatoResultado> resultados) {
-        Map<Long, AggNome> map = new HashMap<>();
-        for (CampeonatoResultado r : resultados) {
-            if (r.getViceCampeaoClube() == null) {
-                continue;
-            }
-            Clube c = r.getViceCampeaoClube();
-            AggNome a = map.computeIfAbsent(c.getClubeId(), id -> new AggNome(id, c.getNome()));
-            a.valor++;
-        }
-        return topAgg(map, "vices");
-    }
-
-    private List<HallRecordeItemDTO> topClubesFinais(List<CampeonatoResultado> resultados) {
-        Map<Long, AggNome> map = new HashMap<>();
-        for (CampeonatoResultado r : resultados) {
-            if (r.getCampeaoClube() != null) {
-                Clube c = r.getCampeaoClube();
-                map.computeIfAbsent(c.getClubeId(), id -> new AggNome(id, c.getNome())).valor++;
-            }
-            if (r.getViceCampeaoClube() != null) {
-                Clube c = r.getViceCampeaoClube();
-                map.computeIfAbsent(c.getClubeId(), id -> new AggNome(id, c.getNome())).valor++;
-            }
-        }
-        return topAgg(map, "finais");
-    }
-
-    private List<HallRecordeItemDTO> topClubesSequenciaTitulos(List<CampeonatoResultado> resultados) {
-        Map<Long, List<Boolean>> porClube = new HashMap<>();
-        Map<Long, String> nomes = new HashMap<>();
-        List<CampeonatoResultado> cronologico = new ArrayList<>(resultados);
-        cronologico.sort(Comparator.comparing(CampeonatoResultado::getDataConquista,
-                Comparator.nullsLast(Comparator.naturalOrder())));
-
-        Set<Long> todosClubes = new HashSet<>();
-        for (CampeonatoResultado r : cronologico) {
-            if (r.getCampeaoClube() != null) {
-                todosClubes.add(r.getCampeaoClube().getClubeId());
-                nomes.put(r.getCampeaoClube().getClubeId(), r.getCampeaoClube().getNome());
-            }
-            if (r.getViceCampeaoClube() != null) {
-                todosClubes.add(r.getViceCampeaoClube().getClubeId());
-                nomes.put(r.getViceCampeaoClube().getClubeId(), r.getViceCampeaoClube().getNome());
-            }
-        }
-
-        for (CampeonatoResultado r : cronologico) {
-            Long campeaoId = r.getCampeaoClube() != null ? r.getCampeaoClube().getClubeId() : null;
-            for (Long clubeId : todosClubes) {
-                porClube.computeIfAbsent(clubeId, k -> new ArrayList<>())
-                        .add(Objects.equals(clubeId, campeaoId));
-            }
-        }
-
-        Map<Long, AggNome> map = new HashMap<>();
-        for (Map.Entry<Long, List<Boolean>> e : porClube.entrySet()) {
-            int melhor = 0;
-            int atual = 0;
-            for (Boolean titulo : e.getValue()) {
-                if (Boolean.TRUE.equals(titulo)) {
-                    atual++;
-                    melhor = Math.max(melhor, atual);
-                } else {
-                    atual = 0;
-                }
-            }
-            if (melhor > 0) {
-                AggNome a = new AggNome(e.getKey(), nomes.get(e.getKey()));
-                a.valor = melhor;
-                map.put(e.getKey(), a);
-            }
-        }
-        return topAgg(map, "em sequência");
-    }
-
-    private List<HallRecordeItemDTO> topClubesParticipacoes(List<HistoricoClubeCampeonato> historicos) {
-        Map<Long, AggNome> map = new HashMap<>();
-        for (HistoricoClubeCampeonato h : historicos) {
-            Clube c = h.getClube();
-            map.computeIfAbsent(c.getClubeId(), id -> new AggNome(id, c.getNome())).valor++;
-        }
-        return topAgg(map, "participações");
-    }
-
-    private List<HallRecordeItemDTO> topClubesAproveitamento(List<HistoricoClubeCampeonato> historicos) {
-        Map<Long, int[]> stats = new HashMap<>();
-        Map<Long, String> nomes = new HashMap<>();
-        for (HistoricoClubeCampeonato h : historicos) {
-            Long id = h.getClube().getClubeId();
-            nomes.put(id, h.getClube().getNome());
-            int[] s = stats.computeIfAbsent(id, k -> new int[3]);
-            s[0] += valor(h.getVitorias());
-            s[1] += valor(h.getEmpates());
-            s[2] += valor(h.getJogos());
-        }
-        List<HallRecordeItemDTO> lista = new ArrayList<>();
-        for (Map.Entry<Long, int[]> e : stats.entrySet()) {
-            int[] s = e.getValue();
-            if (s[2] < 3) {
-                continue;
-            }
-            double apr = aproveitamento(s[0], s[1], s[2]);
-            lista.add(new HallRecordeItemDTO(e.getKey(), nomes.get(e.getKey()), null, apr, "%"));
-        }
-        lista.sort(Comparator.comparing((HallRecordeItemDTO i) -> i.getValor().doubleValue()).reversed());
-        return lista.stream().limit(TOP).collect(Collectors.toList());
-    }
-
     private Map<String, CompetidorAgg> agregarCompetidores(
             List<CampeonatoResultado> resultados,
             List<HistoricoClubeCampeonato> historicos) {
@@ -1145,24 +1023,6 @@ public class HallDaFamaService {
             return;
         }
         map.computeIfAbsent(normalizar(nome), k -> new CompetidorAgg(nome.trim()));
-    }
-
-    private Map<Long, AtletaAgg> agregarAtletas(List<HistoricoAtletaCampeonato> historicos) {
-        Map<Long, AtletaAgg> map = new HashMap<>();
-        for (HistoricoAtletaCampeonato h : historicos) {
-            Atleta atleta = h.getAtleta();
-            AtletaAgg a = map.computeIfAbsent(atleta.getAtletaId(),
-                    id -> new AtletaAgg(id, nomeAtleta(atleta.getNome(), atleta.getSobrenome())));
-            a.gols += valor(h.getGols());
-            a.assistencias += valor(h.getAssistencias());
-            a.golsContra += valor(h.getGolsContra());
-            a.amarelos += valor(h.getCartoesAmarelos());
-            a.vermelhos += valor(h.getCartoesVermelhos());
-            if (Boolean.TRUE.equals(h.getTituloConquistado())) {
-                a.titulos++;
-            }
-        }
-        return map;
     }
 
     private List<HallRecordeItemDTO> todosCompetidor(
@@ -1375,38 +1235,6 @@ public class HallDaFamaService {
         return Integer.parseInt(value.toString());
     }
 
-    private List<HallRecordeItemDTO> topCompetidor(
-            Map<String, CompetidorAgg> map,
-            ToIntFunction<CompetidorAgg> extractor,
-            String label) {
-        return todosCompetidor(map, extractor, label);
-    }
-
-    private List<HallRecordeItemDTO> topCompetidorAproveitamento(Map<String, CompetidorAgg> map) {
-        return todosCompetidorAproveitamento(map);
-    }
-
-    private List<HallRecordeItemDTO> topAtleta(
-            Map<Long, AtletaAgg> map,
-            ToIntFunction<AtletaAgg> extractor,
-            String label) {
-        return map.values().stream()
-                .filter(a -> extractor.applyAsInt(a) > 0)
-                .sorted(Comparator.comparingInt(extractor).reversed()
-                        .thenComparing(a -> a.nome, String.CASE_INSENSITIVE_ORDER))
-                .map(a -> new HallRecordeItemDTO(a.id, a.nome, null, extractor.applyAsInt(a), label))
-                .collect(Collectors.toList());
-    }
-
-    private List<HallRecordeItemDTO> topAgg(Map<Long, AggNome> map, String label) {
-        return map.values().stream()
-                .filter(a -> a.valor > 0)
-                .sorted(Comparator.comparingInt((AggNome a) -> a.valor).reversed()
-                        .thenComparing(a -> a.nome, String.CASE_INSENSITIVE_ORDER))
-                .map(a -> new HallRecordeItemDTO(a.id, a.nome, null, a.valor, label))
-                .collect(Collectors.toList());
-    }
-
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -1553,22 +1381,6 @@ public class HallDaFamaService {
         int empates;
 
         CompetidorAgg(String nome) {
-            this.nome = nome != null ? nome : "";
-        }
-    }
-
-    private static final class AtletaAgg {
-        final Long id;
-        final String nome;
-        int gols;
-        int assistencias;
-        int golsContra;
-        int amarelos;
-        int vermelhos;
-        int titulos;
-
-        AtletaAgg(Long id, String nome) {
-            this.id = id;
             this.nome = nome != null ? nome : "";
         }
     }

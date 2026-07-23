@@ -18,6 +18,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.BatchSize;
+
 @Entity
 @Table(name = "campeonato")
 public class Campeonato {
@@ -69,15 +71,19 @@ public class Campeonato {
     private CampeonatoClube campeaoClube;
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 32)
     private List<CampeonatoDistribuicaoRank> distribuicaoRanks = new ArrayList<>();
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 64)
     private List<CampeonatoClube> clubes = new ArrayList<>();
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 64)
     private List<CampeonatoAtleta> atletas = new ArrayList<>();
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 16)
     private List<CampeonatoRodada> rodadas = new ArrayList<>();
 
     public Campeonato() {

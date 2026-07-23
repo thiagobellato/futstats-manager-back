@@ -10,8 +10,6 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoSuspensao;
 @Repository
 public interface CampeonatoSuspensaoRepository extends JpaRepository<CampeonatoSuspensao, Long> {
 
-    List<CampeonatoSuspensao> findByCampeonatoCampeonatoId(Long campeonatoId);
-
     List<CampeonatoSuspensao> findByCampeonatoCampeonatoIdAndAtivaTrue(Long campeonatoId);
 
     void deleteByCampeonatoCampeonatoId(Long campeonatoId);

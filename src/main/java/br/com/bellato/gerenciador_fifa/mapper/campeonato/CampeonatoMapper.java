@@ -189,10 +189,6 @@ public class CampeonatoMapper {
         return toClubeDTO(clube, null);
     }
 
-    public static ClubeDisponivelDTO toClubeDisponivel(Clube clube) {
-        return toClubeDisponivel(clube, false);
-    }
-
     public static ClubeDisponivelDTO toClubeDisponivel(Clube clube, boolean protegido) {
         ClubeDisponivelDTO dto = new ClubeDisponivelDTO();
         dto.setClubeId(clube.getClubeId());

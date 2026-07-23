@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,16 +15,8 @@ import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
 @Repository
 public interface EstatisticaAtletaRepository extends JpaRepository<EstatisticaAtleta, Long> {
 
-    List<EstatisticaAtleta> findAll(Specification<EstatisticaAtleta> specification);
-
-    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId AND e.clube.clubeId = :clubeId")
-    Optional<EstatisticaAtleta> findByAtletaIdAndClubeId(@Param("atletaId") Long atletaId, @Param("clubeId") Long clubeId);
-
     @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube")
     List<EstatisticaAtleta> findAllWithAtletaAndClube();
-
-    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId AND e.dataFim IS NOT NULL")
-    Optional<EstatisticaAtleta> findByAtletaIdAndDataFimIsNotNull(@Param("atletaId") Long atletaId);
 
     @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId AND e.dataFim IS NULL")
     Optional<EstatisticaAtleta> findByAtletaIdAndDataFimIsNull(@Param("atletaId") Long atletaId);
@@ -35,9 +26,6 @@ public interface EstatisticaAtletaRepository extends JpaRepository<EstatisticaAt
 
     @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId IN :atletaIds")
     List<EstatisticaAtleta> findByAtletaAtletaIdIn(@Param("atletaIds") List<Long> atletaIds);
-
-    @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId AND e.dataFim IS NULL")
-    Optional<EstatisticaAtleta> findAtivaByAtletaId(@Param("atletaId") Long atletaId);
 
     @Query("SELECT e FROM EstatisticaAtleta e JOIN FETCH e.atleta JOIN FETCH e.clube WHERE e.atleta.atletaId = :atletaId")
     List<EstatisticaAtleta> findAllByAtletaId(@Param("atletaId") Long atletaId);

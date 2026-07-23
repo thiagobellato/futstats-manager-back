@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResumoRankResponseDTO;
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.model.Clube;
-import br.com.bellato.gerenciador_fifa.model.EstatisticaClube;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaClubeRepository;
 

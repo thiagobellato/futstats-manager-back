@@ -1,8 +1,5 @@
 package br.com.bellato.gerenciador_fifa.dto.campeonato;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;

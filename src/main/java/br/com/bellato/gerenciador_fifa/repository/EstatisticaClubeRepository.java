@@ -10,21 +10,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.model.EstatisticaClube;
 
 @Repository
 public interface EstatisticaClubeRepository extends JpaRepository<EstatisticaClube, Long> {
 
     Optional<EstatisticaClube> findByClubeClubeId(Long clubeId);
-
-    @Query("SELECT e FROM EstatisticaClube e JOIN FETCH e.clube WHERE e.clube.clubeId = :clubeId")
-    Optional<EstatisticaClube> findByClubeIdComClube(@Param("clubeId") Long clubeId);
-
-    @Query("SELECT e FROM EstatisticaClube e JOIN FETCH e.clube WHERE e.clube.clubeId IN :clubeIds")
-    List<EstatisticaClube> findByClubeClubeIdIn(@Param("clubeIds") List<Long> clubeIds);
-
-    long countByRank(ClubRank rank);
 
     @Query("SELECT e.rank, COUNT(e) FROM EstatisticaClube e WHERE e.rank IS NOT NULL GROUP BY e.rank")
     List<Object[]> contarAgrupadoPorRank();

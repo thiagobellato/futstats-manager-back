@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta;
@@ -11,15 +13,14 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta;
 @Repository
 public interface CampeonatoAtletaRepository extends JpaRepository<CampeonatoAtleta, Long> {
 
-    List<CampeonatoAtleta> findByCampeonatoCampeonatoId(Long campeonatoId);
-
-    List<CampeonatoAtleta> findByCampeonatoCampeonatoIdAndAtivoTrue(Long campeonatoId);
-
-    List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeId(Long campeonatoClubeId);
+    @Query("""
+            SELECT a FROM CampeonatoAtleta a
+            LEFT JOIN FETCH a.campeonatoClube
+            WHERE a.campeonato.campeonatoId = :campeonatoId
+            """)
+    List<CampeonatoAtleta> findByCampeonatoCampeonatoId(@Param("campeonatoId") Long campeonatoId);
 
     List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeIdAndAtivoTrue(Long campeonatoClubeId);
-
-    List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeIdIn(List<Long> campeonatoClubeIds);
 
     List<CampeonatoAtleta> findByCampeonatoClubeCampeonatoClubeIdInAndAtivoTrue(List<Long> campeonatoClubeIds);
 
@@ -29,8 +30,4 @@ public interface CampeonatoAtletaRepository extends JpaRepository<CampeonatoAtle
             Long campeonatoId, Long atletaOrigemId);
 
     List<CampeonatoAtleta> findByCampeonatoCampeonatoIdAndIdentidade(Long campeonatoId, String identidade);
-
-    long countByCampeonatoCampeonatoId(Long campeonatoId);
-
-    long countByCampeonatoCampeonatoIdAndAtivoTrue(Long campeonatoId);
 }
