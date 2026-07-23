@@ -382,16 +382,19 @@ public class CampeonatoPartidaService {
             int assists = 0;
             int amarelos = 0;
             int vermelhos = 0;
+            int golsContra = 0;
             for (CampeonatoAtleta v : vinculos) {
                 gols += valor(v.getGols());
                 assists += valor(v.getAssistencias());
                 amarelos += valor(v.getCartoesAmarelos());
                 vermelhos += valor(v.getCartoesVermelhos());
+                golsContra += valor(v.getGolsContra());
             }
             dto.setGols(gols);
             dto.setAssistencias(assists);
             dto.setCartoesAmarelos(amarelos);
             dto.setCartoesVermelhos(vermelhos);
+            dto.setGolsContra(golsContra);
             resultado.add(dto);
         }
         return resultado;
@@ -648,6 +651,7 @@ public class CampeonatoPartidaService {
     private ClassificacaoClubeDTO toClassificacaoDTO(CampeonatoClube clube) {
         ClassificacaoClubeDTO dto = new ClassificacaoClubeDTO();
         dto.setCampeonatoClubeId(clube.getCampeonatoClubeId());
+        dto.setClubeOrigemId(clube.getClubeOrigemId());
         dto.setNome(clube.getNome());
         dto.setSigla(clube.getSigla());
         dto.setCompetidorNumero(clube.getCompetidorNumero());

@@ -15,6 +15,7 @@ public class RankingAtletaCampeonatoDTO {
     private Integer assistencias;
     private Integer cartoesAmarelos;
     private Integer cartoesVermelhos;
+    private Integer golsContra;
 
     public Long getCampeonatoAtletaId() {
         return campeonatoAtletaId;
@@ -94,5 +95,13 @@ public class RankingAtletaCampeonatoDTO {
 
     public void setCartoesVermelhos(Integer cartoesVermelhos) {
         this.cartoesVermelhos = cartoesVermelhos;
+    }
+
+    public Integer getGolsContra() {
+        return golsContra;
+    }
+
+    public void setGolsContra(Integer golsContra) {
+        this.golsContra = golsContra;
     }
 }

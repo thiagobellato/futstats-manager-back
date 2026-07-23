@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class ClassificacaoClubeDTO {
 
     private Long campeonatoClubeId;
+    private Long clubeOrigemId;
     private String nome;
     private String sigla;
     private Integer competidorNumero;
@@ -28,6 +29,14 @@ public class ClassificacaoClubeDTO {
 
     public void setCampeonatoClubeId(Long campeonatoClubeId) {
         this.campeonatoClubeId = campeonatoClubeId;
+    }
+
+    public Long getClubeOrigemId() {
+        return clubeOrigemId;
+    }
+
+    public void setClubeOrigemId(Long clubeOrigemId) {
+        this.clubeOrigemId = clubeOrigemId;
     }
 
     public String getNome() {
