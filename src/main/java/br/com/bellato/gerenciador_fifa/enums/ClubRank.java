@@ -22,8 +22,11 @@ public enum ClubRank {
         this.sigla = sigla;
     }
 
+    /**
+     * Valor canônico persistido no banco: S, A, B, C, D ou E.
+     */
     public String getDatabaseValue() {
-        return descricao + "/" + sigla;
+        return sigla;
     }
 
     @JsonValue
@@ -33,12 +36,52 @@ public enum ClubRank {
 
     @JsonCreator
     public static ClubRank fromJson(String value) {
+        ClubRank rank = parse(value);
+        if (rank == null) {
+            throw new IllegalArgumentException("Rank de clube inválido: " + value);
+        }
+        return rank;
+    }
+
+    /**
+     * Aceita formatos legados e canônicos: S, Rank S, Rank S/S, RANK_S, etc.
+     */
+    public static ClubRank parse(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String raw = value.trim();
+        String normalized = raw.toUpperCase()
+                .replace("RANK_", "")
+                .replace("RANK ", "")
+                .replace(" ", "");
+
+        // "S/S", "RANKS/S" após limpeza parcial → pega o último token de 1 letra
+        if (normalized.contains("/")) {
+            String[] parts = normalized.split("/");
+            normalized = parts[parts.length - 1];
+        }
+
         for (ClubRank rank : values()) {
-            if (rank.sigla.equalsIgnoreCase(value) || rank.descricao.equalsIgnoreCase(value)) {
+            if (rank.sigla.equalsIgnoreCase(raw)
+                    || rank.sigla.equalsIgnoreCase(normalized)
+                    || rank.descricao.equalsIgnoreCase(raw)
+                    || rank.name().equalsIgnoreCase(raw)
+                    || rank.name().equalsIgnoreCase(normalized)
+                    || rank.getDatabaseValue().equalsIgnoreCase(normalized)) {
                 return rank;
             }
         }
-        throw new IllegalArgumentException("Rank de clube inválido: " + value);
+
+        // Última tentativa: primeira letra A–E / S
+        if (normalized.length() == 1) {
+            for (ClubRank rank : values()) {
+                if (rank.sigla.equalsIgnoreCase(normalized)) {
+                    return rank;
+                }
+            }
+        }
+        return null;
     }
 
     public String getDescricao() {
@@ -94,12 +137,11 @@ public enum ClubRank {
             if (dbData == null || dbData.isEmpty()) {
                 return null;
             }
-            for (ClubRank rank : ClubRank.values()) {
-                if (dbData.equals(rank.getDatabaseValue())) {
-                    return rank;
-                }
+            ClubRank rank = ClubRank.parse(dbData);
+            if (rank == null) {
+                throw new IllegalArgumentException("Rank de clube inválido no banco de dados: " + dbData);
             }
-            throw new IllegalArgumentException("Rank de clube inválido no banco de dados: " + dbData);
+            return rank;
         }
     }
 }

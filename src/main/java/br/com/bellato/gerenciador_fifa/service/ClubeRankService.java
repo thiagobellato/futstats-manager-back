@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResumoRankResponseDTO;
 import br.com.bellato.gerenciador_fifa.enums.ClubRank;
 import br.com.bellato.gerenciador_fifa.model.Clube;
+import br.com.bellato.gerenciador_fifa.model.EstatisticaClube;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
+import br.com.bellato.gerenciador_fifa.repository.EstatisticaClubeRepository;
 
 @Service
 public class ClubeRankService {
@@ -20,13 +22,16 @@ public class ClubeRankService {
     @Autowired
     private ClubeRepository clubeRepository;
 
+    @Autowired
+    private EstatisticaClubeRepository estatisticaClubeRepository;
+
     public ClubeResumoRankResponseDTO obterResumoRanks() {
         Map<ClubRank, Long> quantidadePorRank = new EnumMap<>(ClubRank.class);
         for (ClubRank rank : ClubRank.values()) {
             quantidadePorRank.put(rank, 0L);
         }
 
-        for (Object[] registro : clubeRepository.contarAgrupadoPorRank()) {
+        for (Object[] registro : estatisticaClubeRepository.contarAgrupadoPorRank()) {
             ClubRank rank = (ClubRank) registro[0];
             Long quantidade = (Long) registro[1];
             quantidadePorRank.put(rank, quantidade);
@@ -51,17 +56,19 @@ public class ClubeRankService {
 
     @Transactional
     public void atribuirRankSeNecessario(Clube clube) {
+        anexarEstatisticaExistente(clube);
         if (clube.getRank() != null) {
             return;
         }
         clube.setRank(encontrarRankComMenosClubes());
-        clubeRepository.save(clube);
+        persistirSomenteViaClube(clube);
     }
 
     @Transactional
     public void atribuirRanksSeNecessario(List<Clube> clubes) {
         List<Clube> pendentes = new ArrayList<>();
         for (Clube clube : clubes) {
+            anexarEstatisticaExistente(clube);
             if (clube.getRank() == null) {
                 pendentes.add(clube);
             }
@@ -70,16 +77,53 @@ public class ClubeRankService {
             return;
         }
         distribuirEquilibradamente(pendentes);
-        clubeRepository.saveAll(pendentes);
+        for (Clube clube : pendentes) {
+            persistirSomenteViaClube(clube);
+        }
     }
 
     private void atribuirRanksEquilibrados() {
-        List<Clube> semRank = clubeRepository.findByRankIsNull();
+        List<Clube> semRank = clubeRepository.findClubesSemRank();
         if (semRank.isEmpty()) {
             return;
         }
-        distribuirEquilibradamente(semRank);
-        clubeRepository.saveAll(semRank);
+        for (Clube clube : semRank) {
+            anexarEstatisticaExistente(clube);
+        }
+        List<Clube> aindaSemRank = semRank.stream()
+                .filter(c -> c.getRank() == null)
+                .toList();
+        if (aindaSemRank.isEmpty()) {
+            return;
+        }
+        distribuirEquilibradamente(aindaSemRank);
+        for (Clube clube : aindaSemRank) {
+            persistirSomenteViaClube(clube);
+        }
+    }
+
+    /**
+     * Se já existe linha 1:1 no banco, reutiliza (evita UK em clube_id).
+     */
+    private void anexarEstatisticaExistente(Clube clube) {
+        if (clube.getEstatistica() != null && clube.getEstatistica().getId() != null) {
+            return;
+        }
+        estatisticaClubeRepository.findByClubeClubeId(clube.getClubeId()).ifPresent(existente -> {
+            ClubRank rankPendente = clube.getEstatistica() != null ? clube.getEstatistica().getRank() : null;
+            clube.setEstatistica(existente);
+            if (existente.getRank() == null && rankPendente != null) {
+                existente.setRank(rankPendente);
+            }
+        });
+    }
+
+    /** Cascade ALL em Clube.estatistica — um único save evita insert duplicado. */
+    private void persistirSomenteViaClube(Clube clube) {
+        if (clube.getEstatistica() == null) {
+            return;
+        }
+        clubeRepository.save(clube);
     }
 
     private void distribuirEquilibradamente(List<Clube> clubes) {

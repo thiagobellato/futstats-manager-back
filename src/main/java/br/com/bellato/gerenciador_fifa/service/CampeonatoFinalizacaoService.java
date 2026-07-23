@@ -36,6 +36,7 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoResultado;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoRodada;
 import br.com.bellato.gerenciador_fifa.model.Clube;
 import br.com.bellato.gerenciador_fifa.model.EstatisticaAtleta;
+import br.com.bellato.gerenciador_fifa.model.EstatisticaClube;
 import br.com.bellato.gerenciador_fifa.model.HistoricoAtletaCampeonato;
 import br.com.bellato.gerenciador_fifa.model.HistoricoClubeCampeonato;
 import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
@@ -44,6 +45,7 @@ import br.com.bellato.gerenciador_fifa.repository.CampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoResultadoRepository;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
+import br.com.bellato.gerenciador_fifa.repository.EstatisticaClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoAtletaCampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoClubeCampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.service.finalizacao.RankEvolucaoResultado;
@@ -66,6 +68,9 @@ public class CampeonatoFinalizacaoService {
 
     @Autowired
     private ClubeRepository clubeRepository;
+
+    @Autowired
+    private EstatisticaClubeRepository estatisticaClubeRepository;
 
     @Autowired
     private AtletaRepository atletaRepository;
@@ -653,6 +658,7 @@ public class CampeonatoFinalizacaoService {
 
         List<HistoricoClubeCampeonato> historicos = new ArrayList<>();
         List<Clube> clubesParaSalvar = new ArrayList<>();
+        List<EstatisticaClube> estatisticasParaSalvar = new ArrayList<>();
         int ranksAlterados = 0;
 
         for (CampeonatoClube snap : campeonato.getClubes()) {
@@ -661,15 +667,16 @@ public class CampeonatoFinalizacaoService {
                 continue;
             }
 
-            global.setGolsPro(nvl(global.getGolsPro()) + nvl(snap.getGolsPro()));
-            global.setGolsContra(nvl(global.getGolsContra()) + nvl(snap.getGolsContra()));
-            global.setVitorias(nvl(global.getVitorias()) + nvl(snap.getVitorias()));
-            global.setEmpates(nvl(global.getEmpates()) + nvl(snap.getEmpates()));
-            global.setDerrotas(nvl(global.getDerrotas()) + nvl(snap.getDerrotas()));
+            EstatisticaClube estatistica = obterOuCriarEstatistica(global);
+            estatistica.setGolsPro(nvl(estatistica.getGolsPro()) + nvl(snap.getGolsPro()));
+            estatistica.setGolsContra(nvl(estatistica.getGolsContra()) + nvl(snap.getGolsContra()));
+            estatistica.setVitorias(nvl(estatistica.getVitorias()) + nvl(snap.getVitorias()));
+            estatistica.setEmpates(nvl(estatistica.getEmpates()) + nvl(snap.getEmpates()));
+            estatistica.setDerrotas(nvl(estatistica.getDerrotas()) + nvl(snap.getDerrotas()));
 
             boolean campeao = Objects.equals(snap.getCampeonatoClubeId(), campeaoSnapshot.getCampeonatoClubeId());
             if (campeao) {
-                global.setTitulos(nvl(global.getTitulos()) + 1);
+                estatistica.setTitulos(nvl(estatistica.getTitulos()) + 1);
             }
 
             RankEvolucaoResultado evolucao = evolucoes.get(snap.getCampeonatoClubeId());
@@ -683,7 +690,8 @@ public class CampeonatoFinalizacaoService {
             if (rankNovo != rankBase) {
                 ranksAlterados++;
             }
-            global.setRank(rankNovo);
+            estatistica.setRank(rankNovo);
+            estatisticasParaSalvar.add(estatistica);
             clubesParaSalvar.add(global);
 
             HistoricoClubeCampeonato hist = new HistoricoClubeCampeonato();
@@ -708,9 +716,22 @@ public class CampeonatoFinalizacaoService {
                     hist.getPosicaoFinal(), campeao);
         }
 
+        estatisticaClubeRepository.saveAll(estatisticasParaSalvar);
         clubeRepository.saveAll(clubesParaSalvar);
         historicoClubeCampeonatoRepository.saveAll(historicos);
         return ranksAlterados;
+    }
+
+    private EstatisticaClube obterOuCriarEstatistica(Clube clube) {
+        if (clube.getEstatistica() != null) {
+            return clube.getEstatistica();
+        }
+        return estatisticaClubeRepository.findByClubeClubeId(clube.getClubeId())
+                .orElseGet(() -> {
+                    EstatisticaClube criada = EstatisticaClube.zerada(clube);
+                    clube.setEstatistica(criada);
+                    return criada;
+                });
     }
 
     private void registrarResultado(Campeonato campeonato, Clube campeao, Clube vice) {

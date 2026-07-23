@@ -110,7 +110,7 @@ public class CampeonatoService {
     }
 
     public ClubesPorRankResponseDTO obterClubesPorRank(Long campeaoAnteriorClubeId) {
-        List<Clube> clubes = clubeRepository.findAll();
+        List<Clube> clubes = clubeRepository.findAllComEstatistica();
 
         Map<ClubRank, List<br.com.bellato.gerenciador_fifa.dto.campeonato.ClubeDisponivelDTO>> agrupado =
                 new EnumMap<>(ClubRank.class);
@@ -146,7 +146,7 @@ public class CampeonatoService {
         quantidadePorRank.putAll(clubeRankService.obterQuantidadePorRank());
 
         if (protegido && campeaoAnteriorClubeId != null) {
-            clubeRepository.findById(campeaoAnteriorClubeId).ifPresent(campeao -> {
+            clubeRepository.findByIdComEstatistica(campeaoAnteriorClubeId).ifPresent(campeao -> {
                 if (campeao.getRank() != null) {
                     long atual = quantidadePorRank.getOrDefault(campeao.getRank(), 0L);
                     quantidadePorRank.put(campeao.getRank(), Math.max(0L, atual - 1));
@@ -272,7 +272,7 @@ public class CampeonatoService {
     }
 
     private Map<Long, Clube> obterClubesPorIdMap() {
-        return clubeRepository.findAll().stream()
+        return clubeRepository.findAllComEstatistica().stream()
                 .collect(Collectors.toMap(Clube::getClubeId, Function.identity()));
     }
 

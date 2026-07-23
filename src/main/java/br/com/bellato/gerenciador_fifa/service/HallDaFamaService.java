@@ -68,6 +68,7 @@ import br.com.bellato.gerenciador_fifa.repository.CampeonatoAtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoResultadoRepository;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.EstatisticaAtletaRepository;
+import br.com.bellato.gerenciador_fifa.repository.EstatisticaClubeRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoAtletaCampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.HistoricoClubeCampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
@@ -103,6 +104,9 @@ public class HallDaFamaService {
 
     @Autowired
     private ClubeRepository clubeRepository;
+
+    @Autowired
+    private EstatisticaClubeRepository estatisticaClubeRepository;
 
     @Autowired
     private AtletaRepository atletaRepository;
@@ -250,7 +254,7 @@ public class HallDaFamaService {
     }
 
     public HallClubePerfilDTO obterPerfilClube(Long clubeId) {
-        Clube clube = clubeRepository.findById(clubeId)
+        Clube clube = clubeRepository.findByIdComEstatistica(clubeId)
                 .orElseThrow(() -> new CampeonatoBusinessException("Clube não encontrado."));
 
         List<HistoricoClubeCampeonato> historicos = historicoClubeRepository.findByClubeIdOrderByCampeonatoDesc(clubeId);
@@ -1183,24 +1187,32 @@ public class HallDaFamaService {
     }
 
     private HallRankingPageDTO paginaClubesTitulos(String busca, Pageable pageable, HallRankingChave chave) {
-        Page<Clube> page = clubeRepository.rankingPorTitulos(busca, pageable);
+        Page<Object[]> page = estatisticaClubeRepository.rankingPorTitulos(busca, pageable);
         List<HallRecordeItemDTO> itens = page.getContent().stream()
-                .map(c -> new HallRecordeItemDTO(c.getClubeId(), c.getNome(), c.getSigla(),
-                        valor(c.getTitulos()), "títulos"))
+                .map(row -> new HallRecordeItemDTO(
+                        toLong(row[0]),
+                        row[1] != null ? row[1].toString() : null,
+                        row[2] != null ? row[2].toString() : null,
+                        toLong(row[3]),
+                        "títulos"))
                 .collect(Collectors.toList());
         return toPageDto(chave, itens, page.getNumber() + 1, page.getSize(), page.getTotalElements());
     }
 
     private HallRankingPageDTO paginaClubesAproveitamento(String busca, Pageable pageable, HallRankingChave chave) {
-        Page<Clube> page = clubeRepository.rankingPorAproveitamento(busca, pageable);
+        Page<Object[]> page = estatisticaClubeRepository.rankingPorAproveitamento(busca, pageable);
         List<HallRecordeItemDTO> itens = page.getContent().stream()
-                .map(c -> {
-                    int v = valor(c.getVitorias());
-                    int e = valor(c.getEmpates());
-                    int d = valor(c.getDerrotas());
+                .map(row -> {
+                    int v = toInt(row[3]);
+                    int e = toInt(row[4]);
+                    int d = toInt(row[5]);
                     int j = v + e + d;
-                    return new HallRecordeItemDTO(c.getClubeId(), c.getNome(), c.getSigla(),
-                            aproveitamento(v, e, j), "%");
+                    return new HallRecordeItemDTO(
+                            toLong(row[0]),
+                            row[1] != null ? row[1].toString() : null,
+                            row[2] != null ? row[2].toString() : null,
+                            aproveitamento(v, e, j),
+                            "%");
                 })
                 .collect(Collectors.toList());
         return toPageDto(chave, itens, page.getNumber() + 1, page.getSize(), page.getTotalElements());
@@ -1351,6 +1363,16 @@ public class HallDaFamaService {
             return n.longValue();
         }
         return Long.parseLong(value.toString());
+    }
+
+    private int toInt(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        return Integer.parseInt(value.toString());
     }
 
     private List<HallRecordeItemDTO> topCompetidor(

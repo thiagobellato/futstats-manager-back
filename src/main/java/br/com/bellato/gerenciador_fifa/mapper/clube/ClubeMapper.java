@@ -4,6 +4,7 @@ import br.com.bellato.gerenciador_fifa.dto.clube.ClubeRequestDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseCompletoDTO;
 import br.com.bellato.gerenciador_fifa.dto.clube.ClubeResponseDTO;
 import br.com.bellato.gerenciador_fifa.model.Clube;
+import br.com.bellato.gerenciador_fifa.model.EstatisticaClube;
 
 public class ClubeMapper {
 
@@ -12,9 +13,11 @@ public class ClubeMapper {
         clube.setNome(dto.getNome());
         clube.setSigla(dto.getSigla());
         clube.setPais(dto.getPais());
+        EstatisticaClube estatistica = EstatisticaClube.zerada(clube);
         if (dto.getRank() != null) {
-            clube.setRank(dto.getRank());
+            estatistica.setRank(dto.getRank());
         }
+        clube.setEstatistica(estatistica);
         return clube;
     }
 
@@ -32,14 +35,20 @@ public class ClubeMapper {
         dto.setNome(clube.getNome());
         dto.setSigla(clube.getSigla());
         dto.setPais(clube.getPais());
-        dto.setRank(clube.getRank());
-        dto.setGolsPro(clube.getGolsPro());
-        dto.setGolsContra(clube.getGolsContra());
-        dto.setVitorias(clube.getVitorias());
-        dto.setEmpates(clube.getEmpates());
-        dto.setDerrotas(clube.getDerrotas());
-        dto.setTitulos(clube.getTitulos());
+
+        EstatisticaClube estatistica = clube.getEstatistica();
+        dto.setRank(estatistica != null ? estatistica.getRank() : null);
+        dto.setGolsPro(valor(estatistica != null ? estatistica.getGolsPro() : null));
+        dto.setGolsContra(valor(estatistica != null ? estatistica.getGolsContra() : null));
+        dto.setVitorias(valor(estatistica != null ? estatistica.getVitorias() : null));
+        dto.setEmpates(valor(estatistica != null ? estatistica.getEmpates() : null));
+        dto.setDerrotas(valor(estatistica != null ? estatistica.getDerrotas() : null));
+        dto.setTitulos(valor(estatistica != null ? estatistica.getTitulos() : null));
 
         return dto;
+    }
+
+    private static Integer valor(Integer value) {
+        return value == null ? 0 : value;
     }
 }

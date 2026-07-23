@@ -2,18 +2,24 @@ package br.com.bellato.gerenciador_fifa.model;
 
 import java.util.List;
 
-import br.com.bellato.gerenciador_fifa.enums.ClubRank;
-import br.com.bellato.gerenciador_fifa.enums.ClubRank.ClubRankConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
+import br.com.bellato.gerenciador_fifa.enums.ClubRank;
+
+/**
+ * Dados cadastrais do clube. Desempenho esportivo (rank, V/E/D, gols, títulos)
+ * fica em {@link EstatisticaClube}.
+ */
 @Entity
 @Table(name = "clube")
 public class Clube {
@@ -32,27 +38,8 @@ public class Clube {
     @Column(name = "clubePais")
     private String pais;
 
-    @Column(name = "clubeRank")
-    @Convert(converter = ClubRankConverter.class)
-    private ClubRank rank;
-
-    @Column(name = "clubeGolsPro")
-    private Integer golsPro = 0;
-
-    @Column(name = "clubeGolsContra")
-    private Integer golsContra = 0;
-
-    @Column(name = "clubeVitorias")
-    private Integer vitorias = 0;
-
-    @Column(name = "clubeEmpates")
-    private Integer empates = 0;
-
-    @Column(name = "clubeDerrotas")
-    private Integer derrotas = 0;
-
-    @Column(name = "clubeTitulos")
-    private Integer titulos = 0;
+    @OneToOne(mappedBy = "clube", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private EstatisticaClube estatistica;
 
     @OneToMany(mappedBy = "clube", cascade = CascadeType.ALL)
     private List<Atleta> atletas;
@@ -99,66 +86,34 @@ public class Clube {
         this.pais = pais;
     }
 
+    public EstatisticaClube getEstatistica() {
+        return estatistica;
+    }
+
+    public void setEstatistica(EstatisticaClube estatistica) {
+        this.estatistica = estatistica;
+        if (estatistica != null) {
+            estatistica.setClube(this);
+        }
+    }
+
+    /**
+     * Atalho transparente para o rank persistido em {@link EstatisticaClube}.
+     * Não é coluna de {@code clube}.
+     */
+    @Transient
     public ClubRank getRank() {
-        return rank;
+        return estatistica != null ? estatistica.getRank() : null;
     }
 
+    /**
+     * Atalho transparente: garante estatística e grava o rank nela.
+     */
     public void setRank(ClubRank rank) {
-        this.rank = rank;
-    }
-
-    public Integer getGolsPro() {
-        return golsPro;
-    }
-
-    public void setGolsPro(Integer golsPro) {
-        this.golsPro = golsPro;
-    }
-
-    public Integer getGolsContra() {
-        return golsContra;
-    }
-
-    public void setGolsContra(Integer golsContra) {
-        this.golsContra = golsContra;
-    }
-
-    public Integer getVitorias() {
-        return vitorias;
-    }
-
-    public void setVitorias(Integer vitorias) {
-        this.vitorias = vitorias;
-    }
-
-    public Integer getEmpates() {
-        return empates;
-    }
-
-    public void setEmpates(Integer empates) {
-        this.empates = empates;
-    }
-
-    public Integer getDerrotas() {
-        return derrotas;
-    }
-
-    public void setDerrotas(Integer derrotas) {
-        this.derrotas = derrotas;
-    }
-
-    public Integer getTitulos() {
-        return titulos;
-    }
-
-    public void setTitulos(Integer titulos) {
-        this.titulos = titulos;
-    }
-
-    public int getSaldoGols() {
-        int pro = golsPro == null ? 0 : golsPro;
-        int contra = golsContra == null ? 0 : golsContra;
-        return pro - contra;
+        if (estatistica == null) {
+            setEstatistica(EstatisticaClube.zerada(this));
+        }
+        estatistica.setRank(rank);
     }
 
     @Override
