@@ -66,9 +66,17 @@ public class Campeonato {
     @Column(name = "campeonatoCampeaoCompetidor")
     private Integer campeaoCompetidor;
 
+    /** true = campeonato autenticado (participantes vinculados a User). null/false = livre. */
+    @Column(name = "campeonatoAutenticado")
+    private Boolean autenticado = Boolean.FALSE;
+
     @ManyToOne
     @JoinColumn(name = "campeonato_campeao_clube_id")
     private CampeonatoClube campeaoClube;
+
+    @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 4)
+    private List<CampeonatoParticipante> participantes = new ArrayList<>();
 
     @OneToMany(mappedBy = "campeonato", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 32)
@@ -191,6 +199,22 @@ public class Campeonato {
 
     public void setCampeaoCompetidor(Integer campeaoCompetidor) {
         this.campeaoCompetidor = campeaoCompetidor;
+    }
+
+    public Boolean getAutenticado() {
+        return autenticado;
+    }
+
+    public void setAutenticado(Boolean autenticado) {
+        this.autenticado = autenticado != null ? autenticado : Boolean.FALSE;
+    }
+
+    public List<CampeonatoParticipante> getParticipantes() {
+        return participantes;
+    }
+
+    public void setParticipantes(List<CampeonatoParticipante> participantes) {
+        this.participantes = participantes;
     }
 
     public CampeonatoClube getCampeaoClube() {

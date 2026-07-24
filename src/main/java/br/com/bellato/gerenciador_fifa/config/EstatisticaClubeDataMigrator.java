@@ -70,14 +70,14 @@ public class EstatisticaClubeDataMigrator implements ApplicationRunner {
         garantirColuna("estatisticas_clube", "clube_empates", "INTEGER DEFAULT 0");
         garantirColuna("estatisticas_clube", "clube_derrotas", "INTEGER DEFAULT 0");
         garantirColuna("estatisticas_clube", "clube_titulos", "INTEGER DEFAULT 0");
-        try {
+        // Não usar try/catch em ADD CONSTRAINT: no PostgreSQL o erro aborta a transação
+        // mesmo quando a exception é engolida em Java (SQLState 25P02).
+        if (!restricaoExiste("estatisticas_clube", "fk_estatisticas_clube_clube")) {
             jdbcTemplate.execute("""
                     ALTER TABLE estatisticas_clube
                     ADD CONSTRAINT fk_estatisticas_clube_clube
                     FOREIGN KEY (clube_id) REFERENCES clube (clube_id)
                     """);
-        } catch (Exception ignored) {
-            // já existe
         }
     }
 
@@ -85,6 +85,17 @@ public class EstatisticaClubeDataMigrator implements ApplicationRunner {
         if (!colunaExiste(tabela, coluna)) {
             jdbcTemplate.execute("ALTER TABLE " + tabela + " ADD COLUMN " + coluna + " " + tipo);
         }
+    }
+
+    private boolean restricaoExiste(String tabela, String restricao) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM information_schema.table_constraints
+                WHERE table_schema = current_schema()
+                  AND LOWER(table_name) = LOWER(?)
+                  AND LOWER(constraint_name) = LOWER(?)
+                """, Integer.class, tabela, restricao);
+        return count != null && count > 0;
     }
 
     private void migrarDeClube() {

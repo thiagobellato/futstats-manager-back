@@ -90,6 +90,9 @@ public class CampeonatoFinalizacaoService {
     @Autowired
     private CampeonatoPartidaService campeonatoPartidaService;
 
+    @Autowired
+    private HistoricoCampeonatoUsuarioService historicoCampeonatoUsuarioService;
+
     /**
      * Pré-visualização do resumo final (sem persistir). Usa a mesma política de ranks da finalização.
      */
@@ -187,6 +190,8 @@ public class CampeonatoFinalizacaoService {
         campeonato.setStatus(StatusCampeonato.FINALIZADO);
         campeonato.setDataFinalizacao(agora);
         campeonatoRepository.save(campeonato);
+
+        historicoCampeonatoUsuarioService.registrarAposFinalizacao(campeonato, campeaoGlobal);
 
         log.info(
                 "Campeonato {} finalizado. Atletas sync={}, criados={}, clubes={}, ranks alterados={}",

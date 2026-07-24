@@ -54,6 +54,22 @@ public class CampeonatoValidator {
     }
 
     public static void validarCompetidores(CampeonatoCriarRequestDTO dto) {
+        if (Boolean.TRUE.equals(dto.getAutenticado())) {
+            if (dto.getCompetidor1UserId() == null) {
+                throw new CampeonatoBusinessException(
+                        "Em campeonato autenticado, o Participante 1 deve ser o usuário logado.");
+            }
+            if (dto.getCompetidor2UserId() == null) {
+                throw new CampeonatoBusinessException(
+                        "Em campeonato autenticado, selecione o adversário (Participante 2).");
+            }
+            if (dto.getCompetidor1UserId().equals(dto.getCompetidor2UserId())) {
+                throw new CampeonatoBusinessException(
+                        "Não é permitido selecionar a si mesmo como adversário.");
+            }
+            return;
+        }
+
         if (dto.getCompetidor1Nome() == null || dto.getCompetidor1Nome().isBlank()) {
             throw new CampeonatoBusinessException("O nome do Competidor 1 é obrigatório.");
         }
@@ -62,6 +78,10 @@ public class CampeonatoValidator {
         }
         if (dto.getCompetidor1Nome().trim().equalsIgnoreCase(dto.getCompetidor2Nome().trim())) {
             throw new CampeonatoBusinessException("Os nomes dos competidores devem ser diferentes.");
+        }
+        if (dto.getCompetidor1UserId() != null || dto.getCompetidor2UserId() != null) {
+            throw new CampeonatoBusinessException(
+                    "Não informe usuários em campeonato livre.");
         }
     }
 

@@ -30,11 +30,15 @@ import br.com.bellato.gerenciador_fifa.model.Campeonato;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoAtleta;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoDistribuicaoRank;
+import br.com.bellato.gerenciador_fifa.model.CampeonatoParticipante;
 import br.com.bellato.gerenciador_fifa.model.Clube;
+import br.com.bellato.gerenciador_fifa.model.User;
 import br.com.bellato.gerenciador_fifa.repository.AtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoAtletaRepository;
+import br.com.bellato.gerenciador_fifa.repository.CampeonatoParticipanteRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoRepository;
 import br.com.bellato.gerenciador_fifa.repository.ClubeRepository;
+import br.com.bellato.gerenciador_fifa.repository.UserRepository;
 import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIdentidade;
 import br.com.bellato.gerenciador_fifa.validator.CampeonatoValidator;
 import jakarta.persistence.EntityNotFoundException;
@@ -62,6 +66,15 @@ public class CampeonatoService {
 
     @Autowired
     private CampeonatoPartidaService campeonatoPartidaService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CampeonatoParticipanteRepository campeonatoParticipanteRepository;
+
+    @Autowired
+    private UserService userService;
 
     public List<Campeonato> obterTodos() {
         return campeonatoRepository.findAll();
@@ -171,13 +184,18 @@ public class CampeonatoService {
     public CampeonatoValidacaoResponseDTO validar(CampeonatoCriarRequestDTO dto) {
         CampeonatoValidacaoResponseDTO response = new CampeonatoValidacaoResponseDTO();
         try {
+            aplicarParticipante1Autenticado(dto);
             Map<Long, Clube> clubesPorId = obterClubesPorIdMap();
             Map<ClubRank, Long> disponibilidadePorRank = clubeRankService.obterQuantidadePorRank();
             CampeonatoValidator.validarCriacao(dto, clubesPorId, disponibilidadePorRank);
+            validarUsuariosAutenticados(dto);
             response.setValido(true);
             response.setMensagem("Dados válidos para criação do campeonato.");
             response.setQuantidadeAtletasEstimada(estimarQuantidadeAtletas(dto));
         } catch (CampeonatoBusinessException ex) {
+            response.setValido(false);
+            response.setMensagem(ex.getMessage());
+        } catch (IllegalStateException | EntityNotFoundException ex) {
             response.setValido(false);
             response.setMensagem(ex.getMessage());
         }
@@ -186,16 +204,43 @@ public class CampeonatoService {
 
     @Transactional
     public CampeonatoResponseDTO criar(CampeonatoCriarRequestDTO dto) {
+        aplicarParticipante1Autenticado(dto);
         Map<Long, Clube> clubesPorId = obterClubesPorIdMap();
         Map<ClubRank, Long> disponibilidadePorRank = clubeRankService.obterQuantidadePorRank();
         CampeonatoValidator.validarCriacao(dto, clubesPorId, disponibilidadePorRank);
+        validarUsuariosAutenticados(dto);
+
+        boolean autenticado = Boolean.TRUE.equals(dto.getAutenticado());
+        String nome1;
+        String nome2;
+        User user1 = null;
+        User user2 = null;
+
+        if (autenticado) {
+            user1 = userRepository.findById(dto.getCompetidor1UserId())
+                    .orElseThrow(() -> new CampeonatoBusinessException("Usuário autenticado não encontrado."));
+            user2 = userRepository.findById(dto.getCompetidor2UserId())
+                    .orElseThrow(() -> new CampeonatoBusinessException("Usuário do adversário não encontrado."));
+            if (!user1.isEnabled()) {
+                throw new CampeonatoBusinessException("O usuário autenticado está desabilitado.");
+            }
+            if (!user2.isEnabled()) {
+                throw new CampeonatoBusinessException("O adversário selecionado está desabilitado.");
+            }
+            nome1 = user1.getUsername();
+            nome2 = user2.getUsername();
+        } else {
+            nome1 = dto.getCompetidor1Nome().trim();
+            nome2 = dto.getCompetidor2Nome().trim();
+        }
 
         Campeonato campeonato = new Campeonato();
         campeonato.setNome(dto.getNome().trim());
         campeonato.setQuantidadeClubes(dto.getQuantidadeClubes());
         campeonato.setStatus(StatusCampeonato.AGUARDANDO_INICIO);
-        campeonato.setCompetidor1Nome(dto.getCompetidor1Nome().trim());
-        campeonato.setCompetidor2Nome(dto.getCompetidor2Nome().trim());
+        campeonato.setCompetidor1Nome(nome1);
+        campeonato.setCompetidor2Nome(nome2);
+        campeonato.setAutenticado(autenticado);
         campeonato.setPossuiCampeaoAnterior(Boolean.TRUE.equals(dto.getPossuiCampeaoAnterior()));
         campeonato.setDataCriacao(LocalDateTime.now());
 
@@ -203,6 +248,9 @@ public class CampeonatoService {
             campeonato.setCampeaoAnteriorCompetidor(dto.getCampeaoAnteriorCompetidor());
             campeonato.setCampeaoAnteriorClubeOrigemId(dto.getCampeaoAnteriorClubeId());
         }
+
+        campeonato.getParticipantes().add(criarParticipante(campeonato, 1, nome1, autenticado, user1));
+        campeonato.getParticipantes().add(criarParticipante(campeonato, 2, nome2, autenticado, user2));
 
         for (ClubRank rank : ClubRank.values()) {
             CampeonatoDistribuicaoRank distribuicao = new CampeonatoDistribuicaoRank();
@@ -232,6 +280,78 @@ public class CampeonatoService {
         Campeonato salvo = campeonatoRepository.save(campeonato);
         campeonatoMotorService.iniciarCampeonato(salvo);
         return CampeonatoMapper.toDTO(salvo);
+    }
+
+    /**
+     * Em campeonato autenticado, o Participante 1 é sempre o usuário logado (JWT).
+     * Ignora/sobrescreve qualquer competidor1UserId enviado pelo cliente.
+     */
+    private void aplicarParticipante1Autenticado(CampeonatoCriarRequestDTO dto) {
+        if (!Boolean.TRUE.equals(dto.getAutenticado())) {
+            return;
+        }
+        User atual = userService.obterEntidadeAtual();
+        dto.setCompetidor1UserId(atual.getUserId());
+        dto.setCompetidor1Nome(atual.getUsername());
+    }
+
+    private void validarUsuariosAutenticados(CampeonatoCriarRequestDTO dto) {
+        if (!Boolean.TRUE.equals(dto.getAutenticado())) {
+            return;
+        }
+        if (dto.getCompetidor2UserId() == null) {
+            throw new CampeonatoBusinessException("Selecione o adversário (Participante 2).");
+        }
+        if (dto.getCompetidor1UserId().equals(dto.getCompetidor2UserId())) {
+            throw new CampeonatoBusinessException(
+                    "Não é permitido selecionar a si mesmo como adversário.");
+        }
+        User adversario = userRepository.findById(dto.getCompetidor2UserId())
+                .orElseThrow(() -> new CampeonatoBusinessException("Adversário não encontrado."));
+        if (!adversario.isEnabled()) {
+            throw new CampeonatoBusinessException("O adversário selecionado está desabilitado.");
+        }
+    }
+
+    private CampeonatoParticipante criarParticipante(Campeonato campeonato, int side, String displayName,
+            boolean autenticado, User user) {
+        CampeonatoParticipante participante = new CampeonatoParticipante();
+        participante.setCampeonato(campeonato);
+        participante.setSide(side);
+        participante.setDisplayName(displayName);
+        participante.setAuthenticated(autenticado);
+        participante.setUser(user);
+        return participante;
+    }
+
+    /**
+     * Backfill idempotente: campeonatos legados sem participantes recebem 2 livres
+     * a partir de competidor1Nome/competidor2Nome.
+     */
+    @Transactional
+    public int backfillParticipantesLegados() {
+        List<Campeonato> todos = campeonatoRepository.findAll();
+        int criados = 0;
+        for (Campeonato campeonato : todos) {
+            long existentes = campeonatoParticipanteRepository.countByCampeonatoCampeonatoId(campeonato.getCampeonatoId());
+            if (existentes > 0) {
+                continue;
+            }
+            if (campeonato.getAutenticado() == null) {
+                campeonato.setAutenticado(Boolean.FALSE);
+            }
+            String nome1 = campeonato.getCompetidor1Nome() != null && !campeonato.getCompetidor1Nome().isBlank()
+                    ? campeonato.getCompetidor1Nome()
+                    : "Competidor 1";
+            String nome2 = campeonato.getCompetidor2Nome() != null && !campeonato.getCompetidor2Nome().isBlank()
+                    ? campeonato.getCompetidor2Nome()
+                    : "Competidor 2";
+            campeonatoParticipanteRepository.save(criarParticipante(campeonato, 1, nome1, false, null));
+            campeonatoParticipanteRepository.save(criarParticipante(campeonato, 2, nome2, false, null));
+            campeonatoRepository.save(campeonato);
+            criados += 2;
+        }
+        return criados;
     }
 
     private CampeonatoClube criarSnapshotClube(Campeonato campeonato, Clube clubeOrigem, ClubRank rank,
