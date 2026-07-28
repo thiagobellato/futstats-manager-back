@@ -33,6 +33,7 @@ import br.com.bellato.gerenciador_fifa.model.CampeonatoClube;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoPartida;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoPartidaEvento;
 import br.com.bellato.gerenciador_fifa.model.CampeonatoRodada;
+import br.com.bellato.gerenciador_fifa.model.CampeonatoSuspensao;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoAtletaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoPartidaRepository;
 import br.com.bellato.gerenciador_fifa.repository.CampeonatoRepository;
@@ -55,7 +56,7 @@ public class CampeonatoPartidaService {
     private CampeonatoMotorService campeonatoMotorService;
 
     @Autowired
-    private CampeonatoSuspensaoService campeonatoSuspensaoService;
+    private SistemaDisciplinarService sistemaDisciplinarService;
 
     @Transactional(readOnly = true)
     public PartidaDetalheResponseDTO obterDetalhe(Long campeonatoId, Long partidaId) {
@@ -73,13 +74,14 @@ public class CampeonatoPartidaService {
             throw new CampeonatoBusinessException("Esta partida já foi finalizada e não pode ser alterada.");
         }
 
-        List<PartidaEventoRequestDTO> eventosRequest = request.getEventos() == null
-                ? List.of()
-                : request.getEventos();
+        List<PartidaEventoRequestDTO> eventosRequest = sistemaDisciplinarService.recalcularEstadoDisciplinarDaPartida(
+                request.getEventos() == null ? List.of() : request.getEventos());
+        request.setEventos(eventosRequest);
 
         List<CampeonatoAtleta> atletasResolvidos = resolverAtletas(campeonatoId, eventosRequest);
-        Set<String> suspensos = campeonatoSuspensaoService.identidadesSuspensasAtivas(campeonatoId);
+        Set<String> suspensos = sistemaDisciplinarService.identidadesSuspensasAtivas(campeonatoId);
         PartidaRegistroValidator.validarAtletasSuspensos(atletasResolvidos, suspensos);
+        sistemaDisciplinarService.validarEventosDisciplinares(eventosRequest, atletasResolvidos);
         PartidaRegistroValidator.validarEventosContraPlacar(partida, request, atletasResolvidos);
         CampeonatoClube vencedor = PartidaRegistroValidator.determinarVencedor(partida, request);
 
@@ -160,7 +162,7 @@ public class CampeonatoPartidaService {
 
         campeonatoAtletaRepository.saveAll(atletas);
         campeonatoRepository.save(campeonato);
-        campeonatoSuspensaoService.recalcularSuspensoes(campeonato, atletas);
+        sistemaDisciplinarService.recalcularSuspensoes(campeonato, atletas);
     }
 
     @Transactional(readOnly = true)
@@ -295,6 +297,12 @@ public class CampeonatoPartidaService {
         dash.setQuantidadeCartoes(totalCartoes);
         dash.setQuantidadeTransferencias(transferencias);
         dash.setQuantidadeAtletasCriados(identidadesCriadas.size());
+
+        SistemaDisciplinarService.ResumoDisciplinar resumo =
+                sistemaDisciplinarService.resumoSuspensoesAtivas(campeonato.getCampeonatoId());
+        dash.setJogadoresSuspensos(resumo.total());
+        dash.setSuspensosPorVermelho(resumo.porVermelho());
+        dash.setSuspensosPorAmarelo(resumo.porAmarelo());
         return dash;
     }
 
@@ -587,9 +595,10 @@ public class CampeonatoPartidaService {
                 ? List.of()
                 : campeonatoAtletaRepository.findByCampeonatoClubeCampeonatoClubeIdInAndAtivoTrue(clubeIds);
 
-        Set<String> suspensos = partida.getStatus() == StatusPartida.FINALIZADA
-                ? Set.of()
-                : campeonatoSuspensaoService.identidadesSuspensasAtivas(campeonatoId);
+        Map<String, CampeonatoSuspensao> suspensos =
+                partida.getStatus() == StatusPartida.FINALIZADA
+                        ? Map.of()
+                        : sistemaDisciplinarService.mapaSuspensoesAtivas(campeonatoId);
 
         dto.setAtletasMandante(atletas.stream()
                 .filter(a -> mandante != null
@@ -615,7 +624,10 @@ public class CampeonatoPartidaService {
         return dto;
     }
 
-    private CampeonatoAtletaPartidaDTO toAtletaPartidaDTO(CampeonatoAtleta atleta, Set<String> suspensos) {
+    private CampeonatoAtletaPartidaDTO toAtletaPartidaDTO(
+            CampeonatoAtleta atleta,
+            Map<String, CampeonatoSuspensao> suspensos) {
+
         CampeonatoAtletaPartidaDTO dto = new CampeonatoAtletaPartidaDTO();
         dto.setCampeonatoAtletaId(atleta.getCampeonatoAtletaId());
         dto.setCampeonatoClubeId(atleta.getCampeonatoClube().getCampeonatoClubeId());
@@ -623,10 +635,12 @@ public class CampeonatoPartidaService {
         dto.setSobrenome(atleta.getSobrenome());
         dto.setPosicao(atleta.getPosicao());
         String identidade = CampeonatoAtletaIdentidade.garantir(atleta);
-        boolean suspenso = suspensos.contains(identidade);
+        CampeonatoSuspensao suspensao = suspensos.get(identidade);
+        boolean suspenso = suspensao != null;
         dto.setSuspenso(suspenso);
         if (suspenso) {
-            dto.setMotivoSuspensao(CampeonatoSuspensaoService.MOTIVO_EXPULSAO);
+            dto.setMotivoSuspensao(SistemaDisciplinarService.descricaoMotivo(suspensao));
+            dto.setTipoSuspensao(SistemaDisciplinarService.tipoUiMotivo(suspensao));
         }
         return dto;
     }

@@ -10,7 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 /**
- * Suspensão automática por cartão vermelho, escopo exclusivo do campeonato.
+ * Suspensão disciplinar do campeonato (vermelho, segundo amarelo ou acúmulo).
  * Vinculada à identidade do atleta para sobreviver a transferências internas.
  */
 @Entity
@@ -39,6 +39,10 @@ public class CampeonatoSuspensao {
 
     @Column(name = "campeonatoSuspensaoAtiva", nullable = false)
     private Boolean ativa = Boolean.TRUE;
+
+    /** Código de MotivoSuspensao (CARTAO_VERMELHO, SEGUNDO_AMARELO, ACUMULO_AMARELOS). */
+    @Column(name = "campeonatoSuspensaoMotivo", length = 32)
+    private String motivo;
 
     public CampeonatoSuspensao() {
     }
@@ -93,5 +97,13 @@ public class CampeonatoSuspensao {
 
     public boolean isAtiva() {
         return Boolean.TRUE.equals(ativa);
+    }
+
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
     }
 }

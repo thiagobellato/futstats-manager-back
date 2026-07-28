@@ -14,6 +14,8 @@ public class CampeonatoAtletaPartidaDTO {
     private PosicaoFutebol posicao;
     private Boolean suspenso;
     private String motivoSuspensao;
+    /** VERMELHO ou ACUMULO_AMARELOS — usado pela UI para overlay/badge. */
+    private String tipoSuspensao;
 
     public Long getCampeonatoAtletaId() {
         return campeonatoAtletaId;
@@ -69,5 +71,13 @@ public class CampeonatoAtletaPartidaDTO {
 
     public void setMotivoSuspensao(String motivoSuspensao) {
         this.motivoSuspensao = motivoSuspensao;
+    }
+
+    public String getTipoSuspensao() {
+        return tipoSuspensao;
+    }
+
+    public void setTipoSuspensao(String tipoSuspensao) {
+        this.tipoSuspensao = tipoSuspensao;
     }
 }

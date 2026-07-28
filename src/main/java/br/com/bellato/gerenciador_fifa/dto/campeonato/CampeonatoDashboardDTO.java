@@ -26,6 +26,10 @@ public class CampeonatoDashboardDTO {
     private Integer quantidadeTransferencias;
     private Integer quantidadeAtletasCriados;
 
+    private Integer jogadoresSuspensos;
+    private Integer suspensosPorVermelho;
+    private Integer suspensosPorAmarelo;
+
     public String getCampeaoNome() {
         return campeaoNome;
     }
@@ -160,5 +164,29 @@ public class CampeonatoDashboardDTO {
 
     public void setQuantidadeAtletasCriados(Integer quantidadeAtletasCriados) {
         this.quantidadeAtletasCriados = quantidadeAtletasCriados;
+    }
+
+    public Integer getJogadoresSuspensos() {
+        return jogadoresSuspensos;
+    }
+
+    public void setJogadoresSuspensos(Integer jogadoresSuspensos) {
+        this.jogadoresSuspensos = jogadoresSuspensos;
+    }
+
+    public Integer getSuspensosPorVermelho() {
+        return suspensosPorVermelho;
+    }
+
+    public void setSuspensosPorVermelho(Integer suspensosPorVermelho) {
+        this.suspensosPorVermelho = suspensosPorVermelho;
+    }
+
+    public Integer getSuspensosPorAmarelo() {
+        return suspensosPorAmarelo;
+    }
+
+    public void setSuspensosPorAmarelo(Integer suspensosPorAmarelo) {
+        this.suspensosPorAmarelo = suspensosPorAmarelo;
     }
 }

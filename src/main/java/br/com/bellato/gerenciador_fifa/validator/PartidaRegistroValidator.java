@@ -29,7 +29,7 @@ public final class PartidaRegistroValidator {
     }
 
     /**
-     * Atletas suspensos por expulsão não podem participar de eventos da partida.
+     * Atletas com suspensão disciplinar ativa não podem participar de eventos da partida.
      */
     public static void validarAtletasSuspensos(
             List<CampeonatoAtleta> atletasResolvidos,
@@ -46,7 +46,7 @@ public final class PartidaRegistroValidator {
             if (identidadesSuspensas.contains(identidade)) {
                 throw new CampeonatoBusinessException(
                         "O atleta " + nomeAtleta(atleta)
-                                + " está suspenso por expulsão e não pode ser utilizado nesta partida.");
+                                + " está suspenso e não pode ser utilizado nesta partida.");
             }
         }
     }
