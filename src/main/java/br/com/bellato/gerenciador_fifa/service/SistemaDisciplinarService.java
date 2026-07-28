@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.bellato.gerenciador_fifa.dto.campeonato.PartidaEventoRequestDTO;
 import br.com.bellato.gerenciador_fifa.enums.MotivoSuspensao;
+import br.com.bellato.gerenciador_fifa.enums.StatusCampeonato;
 import br.com.bellato.gerenciador_fifa.enums.StatusPartida;
 import br.com.bellato.gerenciador_fifa.enums.TipoEventoPartida;
 import br.com.bellato.gerenciador_fifa.exception.CampeonatoBusinessException;
@@ -34,6 +36,13 @@ import br.com.bellato.gerenciador_fifa.service.transferencia.CampeonatoAtletaIde
  * Serviço único responsável por toda a disciplina do campeonato:
  * cartões, segundo amarelo → vermelho automático, suspensões, liberação e bloqueios.
  * Usa a identidade do atleta (sobrevive a transferências internas).
+ *
+ * <p>Conceitos separados:
+ * <ul>
+ *   <li><b>Histórico</b> — eventos / cartoesAmarelos / cartoesVermelhos (nunca zera)</li>
+ *   <li><b>Fila de acúmulo</b> — amarelosAtivos (temporária; não atravessa campeonatos)</li>
+ *   <li><b>Suspensões geradas</b> — pendentes/ativas (atravessam campeonatos até cumprimento)</li>
+ * </ul>
  */
 @Service
 public class SistemaDisciplinarService {
@@ -55,12 +64,19 @@ public class SistemaDisciplinarService {
 
     /**
      * Suspensões ativas indexadas pela identidade do atleta.
+     * Se houver múltiplas, prioriza acúmulo de amarelos (motivo da suspensão atual).
      */
     @Transactional(readOnly = true)
     public Map<String, CampeonatoSuspensao> mapaSuspensoesAtivas(Long campeonatoId) {
+        List<CampeonatoSuspensao> ativas = new ArrayList<>(campeonatoSuspensaoRepository
+                .findByCampeonatoCampeonatoIdAndAtivaTrue(campeonatoId));
+        ativas.sort(Comparator
+                .comparing((CampeonatoSuspensao s) -> MotivoSuspensao.fromCodigo(s.getMotivo())
+                        != MotivoSuspensao.ACUMULO_AMARELOS)
+                .thenComparing(s -> s.getCampeonatoSuspensaoId() == null ? 0L : s.getCampeonatoSuspensaoId()));
+
         Map<String, CampeonatoSuspensao> mapa = new LinkedHashMap<>();
-        for (CampeonatoSuspensao s : campeonatoSuspensaoRepository
-                .findByCampeonatoCampeonatoIdAndAtivaTrue(campeonatoId)) {
+        for (CampeonatoSuspensao s : ativas) {
             if (s.getIdentidade() != null) {
                 mapa.putIfAbsent(s.getIdentidade(), s);
             }
@@ -247,10 +263,8 @@ public class SistemaDisciplinarService {
                             "O atleta " + nomes.get(atletaId) + " já possui cartão vermelho nesta partida.");
                 }
             }
-            // GOL, GOL_CONTRA e ASSISTENCIA não são bloqueados por expulsão nesta partida
         }
 
-        // Garante que todo segundo amarelo tenha vermelho correspondente
         for (Map.Entry<Long, Integer> entry : amarelos.entrySet()) {
             if (entry.getValue() >= MAX_AMARELOS_POR_PARTIDA
                     && vermelhos.getOrDefault(entry.getKey(), 0) < 1) {
@@ -263,14 +277,77 @@ public class SistemaDisciplinarService {
     }
 
     /**
+     * Copia suspensões ainda ativas de campeonatos finalizados para o novo campeonato.
+     * Amarelos isolados (fila sem suspensão gerada) NÃO são herdados.
+     * Suspensões já geradas ATRAVESsam até serem cumpridas.
+     */
+    @Transactional
+    public void herdarSuspensoesPendentes(Campeonato novoCampeonato, List<CampeonatoAtleta> atletasNovo) {
+        if (novoCampeonato == null || novoCampeonato.getCampeonatoId() == null
+                || atletasNovo == null || atletasNovo.isEmpty()) {
+            return;
+        }
+
+        Set<String> identidades = new HashSet<>();
+        for (CampeonatoAtleta atleta : atletasNovo) {
+            identidades.add(CampeonatoAtletaIdentidade.garantir(atleta));
+        }
+
+        List<CampeonatoSuspensao> candidatas = campeonatoSuspensaoRepository
+                .findAtivasEmCampeonatosComStatus(
+                        StatusCampeonato.FINALIZADO, novoCampeonato.getCampeonatoId());
+
+        if (candidatas.isEmpty()) {
+            return;
+        }
+
+        List<CampeonatoSuspensao> copias = new ArrayList<>();
+        List<CampeonatoSuspensao> origemTransferidas = new ArrayList<>();
+
+        for (CampeonatoSuspensao origem : candidatas) {
+            if (origem.getIdentidade() == null || !identidades.contains(origem.getIdentidade())) {
+                continue;
+            }
+            CampeonatoSuspensao copia = novaSuspensao(
+                    novoCampeonato,
+                    origem.getIdentidade(),
+                    origem.getPartidaOrigem(),
+                    MotivoSuspensao.fromCodigo(origem.getMotivo()),
+                    true);
+            copias.add(copia);
+
+            origem.setAtiva(false);
+            origemTransferidas.add(origem);
+        }
+
+        if (!origemTransferidas.isEmpty()) {
+            campeonatoSuspensaoRepository.saveAll(origemTransferidas);
+        }
+        if (!copias.isEmpty()) {
+            campeonatoSuspensaoRepository.saveAll(copias);
+        }
+    }
+
+    /**
      * Recalcula suspensões a partir das partidas finalizadas (idempotente).
-     * Ordem: rodada → ordem da partida. Transferências aplicadas por id do vínculo
-     * entre partidas, preservando a regra de “próxima partida do clube atual”.
+     * Ordem de consumo por partida: 1) acúmulo de amarelos, 2) vermelho.
+     * Uma partida consome apenas uma punição.
+     * Transferências preservam a fila via identidade do atleta.
+     * Suspensões herdadas são preservadas (não apagadas no rebuild).
      */
     @Transactional
     public void recalcularSuspensoes(Campeonato campeonato, List<CampeonatoAtleta> atletas) {
         Long campeonatoId = campeonato.getCampeonatoId();
-        campeonatoSuspensaoRepository.deleteByCampeonatoCampeonatoId(campeonatoId);
+
+        // Herdadas persistem entre rebuilds; resetamos cumprimento e reaplicamos de forma idempotente
+        List<CampeonatoSuspensao> herdadas = new ArrayList<>(campeonatoSuspensaoRepository
+                .findByCampeonatoCampeonatoIdAndHerdadaTrue(campeonatoId));
+        for (CampeonatoSuspensao h : herdadas) {
+            h.setPartidaCumprimento(null);
+            h.setAtiva(true);
+        }
+
+        campeonatoSuspensaoRepository.deleteByCampeonatoCampeonatoIdAndHerdadaFalse(campeonatoId);
 
         Map<String, Long> clubeAtualPorIdentidade = new HashMap<>();
         List<TransferenciaTimeline> transferencias = new ArrayList<>();
@@ -311,6 +388,18 @@ public class SistemaDisciplinarService {
         List<CampeonatoSuspensao> criadas = new ArrayList<>();
         int transferIdx = 0;
 
+        // Suspensões herdadas entram na fila antes das geradas neste campeonato
+        Map<String, Deque<CampeonatoSuspensao>> herdadasPorIdentidade = new HashMap<>();
+        herdadas.sort(Comparator
+                .comparing((CampeonatoSuspensao s) -> MotivoSuspensao.fromCodigo(s.getMotivo())
+                        != MotivoSuspensao.ACUMULO_AMARELOS)
+                .thenComparing(s -> s.getCampeonatoSuspensaoId() == null ? 0L : s.getCampeonatoSuspensaoId()));
+        for (CampeonatoSuspensao h : herdadas) {
+            herdadasPorIdentidade
+                    .computeIfAbsent(h.getIdentidade(), k -> new ArrayDeque<>())
+                    .addLast(h);
+        }
+
         for (CampeonatoPartida partida : partidas) {
             Long partidaId = partida.getCampeonatoPartidaId() == null ? 0L : partida.getCampeonatoPartidaId();
 
@@ -326,66 +415,226 @@ public class SistemaDisciplinarService {
             Long visitanteId = partida.getClubeVisitante() != null
                     ? partida.getClubeVisitante().getCampeonatoClubeId() : null;
 
-            for (Map.Entry<String, Deque<PendenteSuspensao>> entry : new ArrayList<>(pendentes.entrySet())) {
-                Long clubeAtual = clubeAtualPorIdentidade.get(entry.getKey());
+            Set<String> identidadesNoJogo = new HashSet<>();
+            identidadesNoJogo.addAll(herdadasPorIdentidade.keySet());
+            identidadesNoJogo.addAll(pendentes.keySet());
+
+            for (String identidade : identidadesNoJogo) {
+                Long clubeAtual = clubeAtualPorIdentidade.get(identidade);
                 if (clubeAtual == null) {
                     continue;
                 }
                 if (!Objects.equals(clubeAtual, mandanteId) && !Objects.equals(clubeAtual, visitanteId)) {
                     continue;
                 }
-                Deque<PendenteSuspensao> fila = entry.getValue();
-                PendenteSuspensao origem = fila.pollFirst();
+
+                Deque<CampeonatoSuspensao> filaHerdada = herdadasPorIdentidade.get(identidade);
+                Deque<PendenteSuspensao> fila = pendentes.get(identidade);
+
+                // Ordem obrigatória: acúmulo de amarelos, depois vermelho (1 punição/partida)
+                CampeonatoSuspensao herdadaAmarelo = pollHerdadaPorMotivo(
+                        filaHerdada, MotivoSuspensao.ACUMULO_AMARELOS);
+                if (herdadaAmarelo != null) {
+                    cumprirHerdada(herdadaAmarelo, partida, identidade, amarelosAtivos);
+                    limparFilaHerdadaVazia(herdadasPorIdentidade, identidade, filaHerdada);
+                    continue;
+                }
+
+                PendenteSuspensao pendenteAmarelo = pollPorMotivo(fila, MotivoSuspensao.ACUMULO_AMARELOS);
+                if (pendenteAmarelo != null) {
+                    criadas.add(cumprirPendente(
+                            campeonato, identidade, pendenteAmarelo, partida, amarelosAtivos));
+                    limparFilaPendenteVazia(pendentes, identidade, fila);
+                    continue;
+                }
+
+                CampeonatoSuspensao herdadaVermelho = pollProximaHerdada(filaHerdada);
+                if (herdadaVermelho != null) {
+                    cumprirHerdada(herdadaVermelho, partida, identidade, amarelosAtivos);
+                    limparFilaHerdadaVazia(herdadasPorIdentidade, identidade, filaHerdada);
+                    continue;
+                }
+
+                PendenteSuspensao origem = pollProximaPunicao(fila);
                 if (origem == null) {
                     continue;
                 }
-                CampeonatoSuspensao suspensao = novaSuspensao(
-                        campeonato, entry.getKey(), origem.partida(), origem.motivo());
-                suspensao.setPartidaCumprimento(partida);
-                suspensao.setAtiva(false);
-                criadas.add(suspensao);
-                amarelosAtivos.put(entry.getKey(), 0);
-                if (fila.isEmpty()) {
-                    pendentes.remove(entry.getKey());
-                }
+                criadas.add(cumprirPendente(campeonato, identidade, origem, partida, amarelosAtivos));
+                limparFilaPendenteVazia(pendentes, identidade, fila);
             }
 
             Map<String, ContagemPartida> porJogador = processarCartoesDaPartida(partida);
 
             for (Map.Entry<String, ContagemPartida> entry : porJogador.entrySet()) {
-                String identidade = entry.getKey();
-                ContagemPartida contagem = entry.getValue();
-                int ativos = amarelosAtivos.getOrDefault(identidade, 0) + contagem.amarelos;
-
-                if (contagem.vermelhos > 0) {
-                    MotivoSuspensao motivo = contagem.amarelos >= MAX_AMARELOS_POR_PARTIDA
-                            ? MotivoSuspensao.SEGUNDO_AMARELO
-                            : MotivoSuspensao.CARTAO_VERMELHO;
-                    pendentes.computeIfAbsent(identidade, k -> new ArrayDeque<>())
-                            .addLast(new PendenteSuspensao(partida, motivo));
-                    // Vermelho encerra o ciclo de amarelos ativos (histórico permanece nos eventos)
-                    amarelosAtivos.put(identidade, 0);
-                } else {
-                    amarelosAtivos.put(identidade, ativos);
-                    if (ativos >= AMARELOS_PARA_ACUMULO) {
-                        pendentes.computeIfAbsent(identidade, k -> new ArrayDeque<>())
-                                .addLast(new PendenteSuspensao(partida, MotivoSuspensao.ACUMULO_AMARELOS));
-                        // Contador zera no cumprimento; evita nova suspensão enquanto pendente
-                        amarelosAtivos.put(identidade, 0);
-                    }
-                }
+                aplicarCartoesNaFila(
+                        entry.getKey(),
+                        entry.getValue(),
+                        partida,
+                        amarelosAtivos,
+                        pendentes);
             }
         }
 
         for (Map.Entry<String, Deque<PendenteSuspensao>> entry : pendentes.entrySet()) {
             for (PendenteSuspensao origem : entry.getValue()) {
-                criadas.add(novaSuspensao(campeonato, entry.getKey(), origem.partida(), origem.motivo()));
+                criadas.add(novaSuspensao(
+                        campeonato, entry.getKey(), origem.partida(), origem.motivo(), false));
             }
         }
 
+        if (!herdadas.isEmpty()) {
+            campeonatoSuspensaoRepository.saveAll(herdadas);
+        }
         if (!criadas.isEmpty()) {
             campeonatoSuspensaoRepository.saveAll(criadas);
         }
+    }
+
+    static CampeonatoSuspensao pollProximaHerdada(Deque<CampeonatoSuspensao> fila) {
+        if (fila == null || fila.isEmpty()) {
+            return null;
+        }
+        for (CampeonatoSuspensao s : fila) {
+            if (MotivoSuspensao.fromCodigo(s.getMotivo()) == MotivoSuspensao.ACUMULO_AMARELOS) {
+                fila.remove(s);
+                return s;
+            }
+        }
+        return fila.pollFirst();
+    }
+
+    static CampeonatoSuspensao pollHerdadaPorMotivo(Deque<CampeonatoSuspensao> fila, MotivoSuspensao motivo) {
+        if (fila == null || fila.isEmpty() || motivo == null) {
+            return null;
+        }
+        for (CampeonatoSuspensao s : fila) {
+            if (MotivoSuspensao.fromCodigo(s.getMotivo()) == motivo) {
+                fila.remove(s);
+                return s;
+            }
+        }
+        return null;
+    }
+
+    static PendenteSuspensao pollPorMotivo(Deque<PendenteSuspensao> fila, MotivoSuspensao motivo) {
+        if (fila == null || fila.isEmpty() || motivo == null) {
+            return null;
+        }
+        for (PendenteSuspensao p : fila) {
+            if (p.motivo() == motivo) {
+                fila.remove(p);
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private static void limparFilaHerdadaVazia(
+            Map<String, Deque<CampeonatoSuspensao>> mapa,
+            String identidade,
+            Deque<CampeonatoSuspensao> fila) {
+        if (fila != null && fila.isEmpty()) {
+            mapa.remove(identidade);
+        }
+    }
+
+    private static void limparFilaPendenteVazia(
+            Map<String, Deque<PendenteSuspensao>> mapa,
+            String identidade,
+            Deque<PendenteSuspensao> fila) {
+        if (fila != null && fila.isEmpty()) {
+            mapa.remove(identidade);
+        }
+    }
+
+    private void cumprirHerdada(
+            CampeonatoSuspensao herdada,
+            CampeonatoPartida partida,
+            String identidade,
+            Map<String, Integer> amarelosAtivos) {
+        herdada.setPartidaCumprimento(partida);
+        herdada.setAtiva(false);
+        if (MotivoSuspensao.fromCodigo(herdada.getMotivo()) == MotivoSuspensao.ACUMULO_AMARELOS) {
+            amarelosAtivos.put(identidade, 0);
+        }
+    }
+
+    private CampeonatoSuspensao cumprirPendente(
+            Campeonato campeonato,
+            String identidade,
+            PendenteSuspensao origem,
+            CampeonatoPartida partida,
+            Map<String, Integer> amarelosAtivos) {
+        CampeonatoSuspensao suspensao = novaSuspensao(
+                campeonato, identidade, origem.partida(), origem.motivo(), false);
+        suspensao.setPartidaCumprimento(partida);
+        suspensao.setAtiva(false);
+        if (origem.motivo() == MotivoSuspensao.ACUMULO_AMARELOS) {
+            amarelosAtivos.put(identidade, 0);
+        }
+        return suspensao;
+    }
+
+    /**
+     * Consome a próxima punição: prioridade acúmulo de amarelos, depois vermelho.
+     * Uma chamada = uma punição.
+     */
+    static PendenteSuspensao pollProximaPunicao(Deque<PendenteSuspensao> fila) {
+        if (fila == null || fila.isEmpty()) {
+            return null;
+        }
+        for (PendenteSuspensao p : fila) {
+            if (p.motivo() == MotivoSuspensao.ACUMULO_AMARELOS) {
+                fila.remove(p);
+                return p;
+            }
+        }
+        return fila.pollFirst();
+    }
+
+    /**
+     * Aplica cartões da partida na fila de acúmulo e gera suspensões.
+     * Histórico permanente fica nos eventos — não é alterado aqui.
+     */
+    static void aplicarCartoesNaFila(
+            String identidade,
+            ContagemPartida contagem,
+            CampeonatoPartida partida,
+            Map<String, Integer> amarelosAtivos,
+            Map<String, Deque<PendenteSuspensao>> pendentes) {
+
+        boolean doisAmarelosNaPartida = contagem.amarelos >= MAX_AMARELOS_POR_PARTIDA;
+        boolean temVermelho = contagem.vermelhos > 0;
+        boolean vermelhoDireto = temVermelho && !doisAmarelosNaPartida;
+
+        if (doisAmarelosNaPartida) {
+            // Dois amarelos na mesma partida → vermelho automático.
+            // Esses amarelos NÃO entram na fila; amarelos anteriores são preservados.
+            enfileirar(pendentes, identidade, partida, MotivoSuspensao.SEGUNDO_AMARELO, false);
+            return;
+        }
+
+        int fila = amarelosAtivos.getOrDefault(identidade, 0) + contagem.amarelos;
+        if (fila >= AMARELOS_PARA_ACUMULO) {
+            enfileirar(pendentes, identidade, partida, MotivoSuspensao.ACUMULO_AMARELOS, false);
+            fila = 0; // convertidos em suspensão gerada
+        }
+        amarelosAtivos.put(identidade, fila);
+
+        if (vermelhoDireto) {
+            // Vermelho direto é independente — nunca zera amarelos acumulados
+            enfileirar(pendentes, identidade, partida, MotivoSuspensao.CARTAO_VERMELHO, false);
+        }
+    }
+
+    private static void enfileirar(
+            Map<String, Deque<PendenteSuspensao>> pendentes,
+            String identidade,
+            CampeonatoPartida partida,
+            MotivoSuspensao motivo,
+            boolean herdada) {
+        pendentes.computeIfAbsent(identidade, k -> new ArrayDeque<>())
+                .addLast(new PendenteSuspensao(partida, motivo, herdada));
     }
 
     private Map<String, ContagemPartida> processarCartoesDaPartida(CampeonatoPartida partida) {
@@ -393,7 +642,6 @@ public class SistemaDisciplinarService {
         if (partida.getEventos() == null) {
             return mapa;
         }
-        // Totais por atleta — ordem dos eventos não importa (lançamento pós-jogo)
         for (CampeonatoPartidaEvento evento : partida.getEventos()) {
             if (evento.getAtleta() == null || evento.getTipo() == null) {
                 continue;
@@ -414,7 +662,8 @@ public class SistemaDisciplinarService {
             Campeonato campeonato,
             String identidade,
             CampeonatoPartida origem,
-            MotivoSuspensao motivo) {
+            MotivoSuspensao motivo,
+            boolean herdada) {
 
         CampeonatoSuspensao suspensao = new CampeonatoSuspensao();
         suspensao.setCampeonato(campeonato);
@@ -422,6 +671,7 @@ public class SistemaDisciplinarService {
         suspensao.setPartidaOrigem(origem);
         suspensao.setAtiva(true);
         suspensao.setMotivo(motivo != null ? motivo.getCodigo() : MotivoSuspensao.CARTAO_VERMELHO.getCodigo());
+        suspensao.setHerdada(herdada);
         return suspensao;
     }
 
@@ -461,12 +711,20 @@ public class SistemaDisciplinarService {
     public record ResumoDisciplinar(int total, int porVermelho, int porAmarelo) {
     }
 
-    private static final class ContagemPartida {
-        private int amarelos;
-        private int vermelhos;
+    static final class ContagemPartida {
+        int amarelos;
+        int vermelhos;
+
+        ContagemPartida() {
+        }
+
+        ContagemPartida(int amarelos, int vermelhos) {
+            this.amarelos = amarelos;
+            this.vermelhos = vermelhos;
+        }
     }
 
-    private record PendenteSuspensao(CampeonatoPartida partida, MotivoSuspensao motivo) {
+    record PendenteSuspensao(CampeonatoPartida partida, MotivoSuspensao motivo, boolean herdada) {
     }
 
     private record TransferenciaTimeline(String identidade, Long vinculoId, Long clubeId) {

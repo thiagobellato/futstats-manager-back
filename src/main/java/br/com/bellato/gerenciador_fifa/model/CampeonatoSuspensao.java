@@ -44,6 +44,13 @@ public class CampeonatoSuspensao {
     @Column(name = "campeonatoSuspensaoMotivo", length = 32)
     private String motivo;
 
+    /**
+     * Suspensão gerada em campeonato anterior e carregada para o atual.
+     * Amarelos isolados (sem suspensão gerada) nunca são herdados.
+     */
+    @Column(name = "campeonatoSuspensaoHerdada", nullable = false)
+    private Boolean herdada = Boolean.FALSE;
+
     public CampeonatoSuspensao() {
     }
 
@@ -105,5 +112,17 @@ public class CampeonatoSuspensao {
 
     public void setMotivo(String motivo) {
         this.motivo = motivo;
+    }
+
+    public Boolean getHerdada() {
+        return herdada;
+    }
+
+    public void setHerdada(Boolean herdada) {
+        this.herdada = herdada;
+    }
+
+    public boolean isHerdada() {
+        return Boolean.TRUE.equals(herdada);
     }
 }

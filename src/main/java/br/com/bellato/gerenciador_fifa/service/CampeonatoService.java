@@ -76,6 +76,9 @@ public class CampeonatoService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private SistemaDisciplinarService sistemaDisciplinarService;
+
     public List<Campeonato> obterTodos() {
         return campeonatoRepository.findAll();
     }
@@ -279,6 +282,7 @@ public class CampeonatoService {
 
         Campeonato salvo = campeonatoRepository.save(campeonato);
         campeonatoMotorService.iniciarCampeonato(salvo);
+        sistemaDisciplinarService.herdarSuspensoesPendentes(salvo, salvo.getAtletas());
         return CampeonatoMapper.toDTO(salvo);
     }
 
