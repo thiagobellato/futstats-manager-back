@@ -16,6 +16,8 @@ public class CampeonatoAtletaPartidaDTO {
     private String motivoSuspensao;
     /** VERMELHO ou ACUMULO_AMARELOS — usado pela UI para overlay/badge. */
     private String tipoSuspensao;
+    /** true quando a suspensão veio de campeonato anterior (ainda pendente). */
+    private Boolean suspensaoHerdada;
 
     public Long getCampeonatoAtletaId() {
         return campeonatoAtletaId;
@@ -79,5 +81,13 @@ public class CampeonatoAtletaPartidaDTO {
 
     public void setTipoSuspensao(String tipoSuspensao) {
         this.tipoSuspensao = tipoSuspensao;
+    }
+
+    public Boolean getSuspensaoHerdada() {
+        return suspensaoHerdada;
+    }
+
+    public void setSuspensaoHerdada(Boolean suspensaoHerdada) {
+        this.suspensaoHerdada = suspensaoHerdada;
     }
 }

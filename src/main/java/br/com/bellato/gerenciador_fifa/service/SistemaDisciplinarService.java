@@ -332,7 +332,8 @@ public class SistemaDisciplinarService {
      * Recalcula suspensões a partir das partidas finalizadas (idempotente).
      * Ordem de consumo por partida: 1) acúmulo de amarelos, 2) vermelho.
      * Uma partida consome apenas uma punição.
-     * Transferências preservam a fila via identidade do atleta.
+     * Transferências preservam a fila via identidade; o clube atual em cada partida
+     * é resolvido pelos eventos dos vínculos (não por comparação de IDs entre tabelas).
      * Suspensões herdadas são preservadas (não apagadas no rebuild).
      */
     @Transactional
@@ -349,44 +350,20 @@ public class SistemaDisciplinarService {
 
         campeonatoSuspensaoRepository.deleteByCampeonatoCampeonatoIdAndHerdadaFalse(campeonatoId);
 
-        Map<String, Long> clubeAtualPorIdentidade = new HashMap<>();
-        List<TransferenciaTimeline> transferencias = new ArrayList<>();
-
         Map<String, List<CampeonatoAtleta>> porIdentidade = new HashMap<>();
         for (CampeonatoAtleta atleta : atletas) {
             String identidade = CampeonatoAtletaIdentidade.garantir(atleta);
             porIdentidade.computeIfAbsent(identidade, k -> new ArrayList<>()).add(atleta);
         }
 
-        for (Map.Entry<String, List<CampeonatoAtleta>> entry : porIdentidade.entrySet()) {
-            List<CampeonatoAtleta> vinculos = entry.getValue().stream()
-                    .sorted(Comparator.comparing(a -> a.getCampeonatoAtletaId() == null ? 0L : a.getCampeonatoAtletaId()))
-                    .collect(Collectors.toList());
-            if (vinculos.isEmpty()) {
-                continue;
-            }
-            CampeonatoAtleta primeiro = vinculos.get(0);
-            if (primeiro.getCampeonatoClube() != null) {
-                clubeAtualPorIdentidade.put(entry.getKey(), primeiro.getCampeonatoClube().getCampeonatoClubeId());
-            }
-            for (int i = 1; i < vinculos.size(); i++) {
-                CampeonatoAtleta v = vinculos.get(i);
-                if (v.getCampeonatoClube() != null && v.getCampeonatoAtletaId() != null) {
-                    transferencias.add(new TransferenciaTimeline(
-                            entry.getKey(),
-                            v.getCampeonatoAtletaId(),
-                            v.getCampeonatoClube().getCampeonatoClubeId()));
-                }
-            }
-        }
-
-        transferencias.sort(Comparator.comparing(TransferenciaTimeline::vinculoId));
-
         List<CampeonatoPartida> partidas = listarPartidasFinalizadasOrdenadas(campeonato);
+        // Clube por identidade em cada partida: transferência NÃO compara IDs de tabelas distintas.
+        // O novo vínculo vale a partir da partida seguinte à última com evento do vínculo anterior.
+        Map<String, Long[]> clubePorPartidaIndex = montarClubePorPartidaIndex(porIdentidade, partidas);
+
         Map<String, Deque<PendenteSuspensao>> pendentes = new HashMap<>();
         Map<String, Integer> amarelosAtivos = new HashMap<>();
         List<CampeonatoSuspensao> criadas = new ArrayList<>();
-        int transferIdx = 0;
 
         // Suspensões herdadas entram na fila antes das geradas neste campeonato
         Map<String, Deque<CampeonatoSuspensao>> herdadasPorIdentidade = new HashMap<>();
@@ -400,15 +377,8 @@ public class SistemaDisciplinarService {
                     .addLast(h);
         }
 
-        for (CampeonatoPartida partida : partidas) {
-            Long partidaId = partida.getCampeonatoPartidaId() == null ? 0L : partida.getCampeonatoPartidaId();
-
-            while (transferIdx < transferencias.size()
-                    && transferencias.get(transferIdx).vinculoId() < partidaId) {
-                TransferenciaTimeline t = transferencias.get(transferIdx);
-                clubeAtualPorIdentidade.put(t.identidade(), t.clubeId());
-                transferIdx++;
-            }
+        for (int partidaIndex = 0; partidaIndex < partidas.size(); partidaIndex++) {
+            CampeonatoPartida partida = partidas.get(partidaIndex);
 
             Long mandanteId = partida.getClubeMandante() != null
                     ? partida.getClubeMandante().getCampeonatoClubeId() : null;
@@ -420,7 +390,9 @@ public class SistemaDisciplinarService {
             identidadesNoJogo.addAll(pendentes.keySet());
 
             for (String identidade : identidadesNoJogo) {
-                Long clubeAtual = clubeAtualPorIdentidade.get(identidade);
+                Long[] clubes = clubePorPartidaIndex.get(identidade);
+                Long clubeAtual = clubes != null && partidaIndex < clubes.length
+                        ? clubes[partidaIndex] : null;
                 if (clubeAtual == null) {
                     continue;
                 }
@@ -658,6 +630,76 @@ public class SistemaDisciplinarService {
         return mapa;
     }
 
+    /**
+     * Resolve o clube do atleta em cada partida finalizada.
+     * Transferências internas criam novo {@link CampeonatoAtleta} com a mesma identidade;
+     * o novo clube passa a valer após a última partida em que o vínculo anterior teve eventos.
+     * Evita comparar {@code campeonatoAtletaId} com {@code campeonatoPartidaId} (sequences distintas).
+     */
+    static Map<String, Long[]> montarClubePorPartidaIndex(
+            Map<String, List<CampeonatoAtleta>> porIdentidade,
+            List<CampeonatoPartida> partidas) {
+
+        Map<String, Long[]> resultado = new HashMap<>();
+        if (porIdentidade == null || partidas == null || partidas.isEmpty()) {
+            return resultado;
+        }
+
+        for (Map.Entry<String, List<CampeonatoAtleta>> entry : porIdentidade.entrySet()) {
+            List<CampeonatoAtleta> vinculos = entry.getValue().stream()
+                    .sorted(Comparator.comparing(a -> a.getCampeonatoAtletaId() == null ? 0L : a.getCampeonatoAtletaId()))
+                    .collect(Collectors.toList());
+            if (vinculos.isEmpty()) {
+                continue;
+            }
+
+            int[] fromIndex = new int[vinculos.size()];
+            fromIndex[0] = 0;
+            for (int i = 1; i < vinculos.size(); i++) {
+                Set<Long> vinculosAnteriores = new HashSet<>();
+                for (int k = 0; k < i; k++) {
+                    if (vinculos.get(k).getCampeonatoAtletaId() != null) {
+                        vinculosAnteriores.add(vinculos.get(k).getCampeonatoAtletaId());
+                    }
+                }
+                int ultimoComEvento = -1;
+                for (int j = 0; j < partidas.size(); j++) {
+                    if (partidaTemEventoDeAtletas(partidas.get(j), vinculosAnteriores)) {
+                        ultimoComEvento = j;
+                    }
+                }
+                fromIndex[i] = ultimoComEvento + 1;
+            }
+
+            Long[] clubes = new Long[partidas.size()];
+            for (int j = 0; j < partidas.size(); j++) {
+                Long clubeId = null;
+                for (int i = 0; i < vinculos.size(); i++) {
+                    if (fromIndex[i] <= j && vinculos.get(i).getCampeonatoClube() != null) {
+                        clubeId = vinculos.get(i).getCampeonatoClube().getCampeonatoClubeId();
+                    }
+                }
+                clubes[j] = clubeId;
+            }
+            resultado.put(entry.getKey(), clubes);
+        }
+        return resultado;
+    }
+
+    private static boolean partidaTemEventoDeAtletas(CampeonatoPartida partida, Set<Long> atletaIds) {
+        if (partida == null || partida.getEventos() == null || atletaIds == null || atletaIds.isEmpty()) {
+            return false;
+        }
+        for (CampeonatoPartidaEvento evento : partida.getEventos()) {
+            if (evento.getAtleta() != null
+                    && evento.getAtleta().getCampeonatoAtletaId() != null
+                    && atletaIds.contains(evento.getAtleta().getCampeonatoAtletaId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private CampeonatoSuspensao novaSuspensao(
             Campeonato campeonato,
             String identidade,
@@ -725,8 +767,5 @@ public class SistemaDisciplinarService {
     }
 
     record PendenteSuspensao(CampeonatoPartida partida, MotivoSuspensao motivo, boolean herdada) {
-    }
-
-    private record TransferenciaTimeline(String identidade, Long vinculoId, Long clubeId) {
     }
 }

@@ -641,6 +641,7 @@ public class CampeonatoPartidaService {
         if (suspenso) {
             dto.setMotivoSuspensao(SistemaDisciplinarService.descricaoMotivo(suspensao));
             dto.setTipoSuspensao(SistemaDisciplinarService.tipoUiMotivo(suspensao));
+            dto.setSuspensaoHerdada(suspensao.isHerdada());
         }
         return dto;
     }
