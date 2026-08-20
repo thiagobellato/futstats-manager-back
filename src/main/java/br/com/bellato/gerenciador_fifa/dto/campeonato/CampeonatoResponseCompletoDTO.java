@@ -18,6 +18,7 @@ public class CampeonatoResponseCompletoDTO {
     private StatusCampeonato status;
     private String competidor1Nome;
     private String competidor2Nome;
+    private Boolean autenticado;
     private Boolean possuiCampeaoAnterior;
     private Integer campeaoAnteriorCompetidor;
     private Long campeaoAnteriorClubeOrigemId;
@@ -84,6 +85,14 @@ public class CampeonatoResponseCompletoDTO {
 
     public void setCompetidor2Nome(String competidor2Nome) {
         this.competidor2Nome = competidor2Nome;
+    }
+
+    public Boolean getAutenticado() {
+        return autenticado;
+    }
+
+    public void setAutenticado(Boolean autenticado) {
+        this.autenticado = autenticado;
     }
 
     public Boolean getPossuiCampeaoAnterior() {

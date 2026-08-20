@@ -45,6 +45,7 @@ public class CampeonatoMapper {
         dto.setStatus(campeonato.getStatus());
         dto.setCompetidor1Nome(campeonato.getCompetidor1Nome());
         dto.setCompetidor2Nome(campeonato.getCompetidor2Nome());
+        dto.setAutenticado(campeonato.getAutenticado());
         dto.setPossuiCampeaoAnterior(campeonato.getPossuiCampeaoAnterior());
         dto.setCampeaoAnteriorCompetidor(campeonato.getCampeaoAnteriorCompetidor());
         dto.setCampeaoAnteriorClubeOrigemId(campeonato.getCampeaoAnteriorClubeOrigemId());

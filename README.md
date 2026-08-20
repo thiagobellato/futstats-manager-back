@@ -1,36 +1,91 @@
-# 🏟️ Gerenciador de Atletas - Backend (Spring Boot)
+# FutStats Manager — Backend
 
-Este é o backend da aplicação **futstats**, desenvolvido com **Java + Spring Boot**, que permite o controle de jogadores, seus clubes, estatísticas e transferências entre equipes.
+API REST Spring Boot do **FutStats Manager**.
 
-## 🚀 Tecnologias
+## Stack
 
-- Java 21+
-- Spring Boot
-- Spring Data JPA
-- Hibernate
-- H2 Database (ou substituível por outro)
-- Swagger (documentação da API)
+- Java 17
+- Spring Boot 3.4.6
+- Spring Data JPA + Hibernate
+- Spring Security + JWT (JJWT 0.12)
+- PostgreSQL / H2
 
-## 📁 Estrutura Principal
+## Executar
 
-- **Atleta**: representa o jogador.
-- **Clube**: representa um time de futebol.
-- **EstatisticaAtleta**: entidade relacional entre atleta e clube, com data de início, fim, gols e assistências.
+```bash
+mvn spring-boot:run
+```
 
-## 🔄 Funcionalidades do Backend
+Porta padrão: **8080**.
 
-- **CRUD completo de Atletas e Clubes**
-- **Registro e atualização de estatísticas (gols, assistências)**
-- **Transferência de atleta entre clubes**, com:
-  - Finalização automática da estatística atual (com `dataFim`)
-  - Criação de uma nova estatística para o novo clube
-  - Atualização do clube vinculado ao atleta
-- **Busca de estatísticas ativas ou por histórico completo**
-- **Swagger UI** com todos os endpoints documentados
+### Profiles
 
-## ✅ Endpoints principais
+Definidos via `APP_PROFILE` (padrão: `local`):
 
-- `GET /atletas`, `POST /atletas`, `PUT /atletas/{id}`, `DELETE /atletas/{id}`
-- `GET /clubes`, `POST /clubes`
-- `POST /atletas/{id}/transferir`
-- `GET /estatisticas/atleta/{atletaId}`
+| Profile | Arquivo | Banco |
+|---------|---------|-------|
+| `local` | `application-local.properties` | PostgreSQL |
+| `local-h2` | `application-local-h2.properties` | H2 em arquivo |
+| `dev` | `application-dev.properties` | PostgreSQL remoto |
+| `test` | `application-test.properties` | H2 em memória |
+
+### Variáveis de ambiente
+
+| Variável | Descrição |
+|----------|-----------|
+| `APP_PROFILE` | Profile Spring ativo |
+| `APP_JWT_SECRET` | Secret JWT (HS256, ≥32 chars) |
+| `APP_JWT_EXPIRATION_MS` | Expiração do token (ms) |
+
+Datasource configurado por profile. Para PostgreSQL local, editar `application-local.properties` ou usar variáveis Spring padrão (`SPRING_DATASOURCE_URL`, etc.).
+
+## Build e testes
+
+```bash
+mvn clean package          # build + testes
+mvn test                   # apenas testes
+mvn spring-boot:run -Dspring-boot.run.profiles=local-h2  # sem PostgreSQL
+```
+
+**27 testes** cobrindo: contexto Spring, sistema disciplinar (14), recálculo disciplinar (5), política de evolução de rank (7).
+
+## Estrutura
+
+```
+src/main/java/br/com/bellato/gerenciador_fifa/
+├── controller/     # REST endpoints
+├── service/        # Lógica de negócio
+├── repository/     # JPA repositories
+├── model/          # Entidades
+├── dto/            # Request/Response
+├── mapper/         # Conversões entity ↔ DTO
+├── validator/      # Validações de campeonato e partida
+├── enums/          # Status, ranks, eventos
+├── config/         # Security, CORS, migrators
+├── security/       # JWT filter
+└── exception/      # Handler global
+```
+
+## Endpoints principais
+
+| Prefixo | Controller | Domínio |
+|---------|------------|---------|
+| `/auth` | `AuthController` | Login, registro |
+| `/api/atletas` | `AtletaController` | CRUD atletas globais |
+| `/api/clubes` | `ClubeController` | CRUD clubes globais |
+| `/api/estatisticas` | `EstatisticaAtletaController` | Estatísticas de atletas |
+| `/api/campeonato` | `CampeonatoController` | Campeonatos, partidas, mercado, motor |
+| `/api/hall` | `HallDaFamaController` | Recordes, rankings, busca |
+| `/api/usuarios` | `UserController` | Perfil, rivalidades, busca |
+| `/api/enums` | `EnumController` | Enums públicos |
+
+## Banco de dados
+
+- Desenvolvimento: `spring.jpa.hibernate.ddl-auto=update`.
+- Migrations SQL em `src/main/resources/db/migration/` (V1–V12) — documentação histórica; Flyway **não está ativo**.
+- Migrators Java no startup: `TabelasUsuarioNomenclaturaMigrator`, `EstatisticaClubeDataMigrator`, `CampeonatoParticipanteBackfill`.
+
+## Documentação complementar
+
+- [README raiz](../README.md)
+- [Regras críticas](../docs/REGRAS_CRITICAS.md)
